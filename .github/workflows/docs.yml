@@ -44,8 +44,8 @@ jobs:
   deploy:
     needs: [rust]
     environment:
-      name: "cargo doc"
-      url: ${{ steps.deployment.outputs.page_url }}
+      name: "Document"
+      url: ${{ steps.deployment.outputs.page_url }}/serde_pydict
     runs-on: ubuntu-latest
     steps:
       - name: Download rustdoc
