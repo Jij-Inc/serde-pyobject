@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: ❓ Question
+    url: https://jij-inc.slack.com/archives/C01FNJFD9FU
+    about: Ask and answer questions about JijModeling on Slack
+  - name: 🔧 Troubleshooting
+    url: https://jij-inc.slack.com/archives/C01FNJFD9FU
+    about: Ask for help on Slack
+  - name: 🗣 Discussion
+    url: https://jij-inc.slack.com/archives/C01FNJFD9FU
+    about: Discuss development of JijModeling on Slack
