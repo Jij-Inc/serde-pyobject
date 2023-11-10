@@ -2,6 +2,27 @@
 
 PyO3's PyAny as a serde data format
 
+## Usage
+
+- Convert `T: Serialize` into `&'py PyAny`:
+
+```rust
+use serde::Serialize;
+use pyo3::{Python, types::{PyAny, PyDict}};
+
+#[derive(Serialize)]
+struct A {
+    a: u32,
+    b: String,
+}
+
+Python::with_gil(|py| {
+    let a = A { a: 1, b: "test".to_string() };
+    let obj: &PyAny = serde_pyobject::as_pyobject(py, &a).unwrap();
+    assert!(obj.is_instance_of::<PyDict>());
+});
+```
+
 ## Mapping between Python and serde data model
 
 [serde data model](https://serde.rs/data-model.html) is a data model used in serde.
