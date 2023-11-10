@@ -1,7 +1,7 @@
 use crate::error::{Error, Result};
 use pyo3::{
     prelude::*,
-    types::{PyDict, PyString},
+    types::{PyBool, PyDict, PyFloat, PyString, PyTuple},
 };
 use serde::{ser, Serialize};
 
@@ -17,10 +17,10 @@ pub struct PyAnySerializer<'py> {
     py: Python<'py>,
 }
 
-macro_rules! serialize_primitive {
-    ($f:ident, $t:ty, $p:expr) => {
-        fn $f(self, _v: $t) -> Result<Self::Ok> {
-            todo!()
+macro_rules! serialize_integer {
+    ($f:ident, $t:ty) => {
+        fn $f(self, v: $t) -> Result<Self::Ok> {
+            Ok(v.into_py(self.py).into_ref(self.py))
         }
     };
 }
@@ -38,18 +38,31 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
     type SerializeStruct = Struct<'py>;
     type SerializeStructVariant = StructVariant<'py>;
 
-    serialize_primitive!(serialize_bool, bool, Primitive::Bool);
-    serialize_primitive!(serialize_i8, i8, Primitive::I8);
-    serialize_primitive!(serialize_i16, i16, Primitive::I16);
-    serialize_primitive!(serialize_i32, i32, Primitive::I32);
-    serialize_primitive!(serialize_i64, i64, Primitive::I64);
-    serialize_primitive!(serialize_u8, u8, Primitive::U8);
-    serialize_primitive!(serialize_u16, u16, Primitive::U16);
-    serialize_primitive!(serialize_u32, u32, Primitive::U32);
-    serialize_primitive!(serialize_u64, u64, Primitive::U64);
-    serialize_primitive!(serialize_f32, f32, Primitive::F32);
-    serialize_primitive!(serialize_f64, f64, Primitive::F64);
-    serialize_primitive!(serialize_char, char, Primitive::Char);
+    fn serialize_bool(self, v: bool) -> Result<Self::Ok> {
+        Ok(PyBool::new(self.py, v))
+    }
+
+    serialize_integer!(serialize_i8, i8);
+    serialize_integer!(serialize_i16, i16);
+    serialize_integer!(serialize_i32, i32);
+    serialize_integer!(serialize_i64, i64);
+    serialize_integer!(serialize_u8, u8);
+    serialize_integer!(serialize_u16, u16);
+    serialize_integer!(serialize_u32, u32);
+    serialize_integer!(serialize_u64, u64);
+
+    fn serialize_f32(self, v: f32) -> Result<Self::Ok> {
+        Ok(PyFloat::new(self.py, v as f64))
+    }
+
+    fn serialize_f64(self, v: f64) -> Result<Self::Ok> {
+        Ok(PyFloat::new(self.py, v))
+    }
+
+    fn serialize_char(self, v: char) -> Result<Self::Ok> {
+        let s = v.to_string();
+        Ok(PyString::new(self.py, &s))
+    }
 
     fn serialize_str(self, v: &str) -> Result<Self::Ok> {
         Ok(PyString::new(self.py, v))
@@ -72,20 +85,24 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
     }
 
     fn serialize_unit(self) -> Result<Self::Ok> {
-        todo!()
+        Ok(PyTuple::empty(self.py))
     }
 
     fn serialize_unit_struct(self, name: &'static str) -> Result<Self::Ok> {
-        todo!()
+        let dict = PyDict::new(self.py);
+        dict.set_item(name, PyTuple::empty(self.py))?;
+        Ok(dict)
     }
 
     fn serialize_unit_variant(
         self,
         name: &'static str,
-        _variant_index: u32,
+        _index: u32,
         variant: &'static str,
     ) -> Result<Self::Ok> {
-        todo!()
+        let dict = PyDict::new(self.py);
+        dict.set_item(name, variant)?;
+        Ok(dict)
     }
 
     fn serialize_newtype_struct<T>(self, name: &'static str, value: &T) -> Result<Self::Ok>
