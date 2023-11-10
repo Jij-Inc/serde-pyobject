@@ -1,9 +1,20 @@
 use crate::error::{Error, Result};
-use pyo3::prelude::*;
+use pyo3::{
+    prelude::*,
+    types::{PyDict, PyString},
+};
 use serde::{ser, Serialize};
 
+pub fn as_py_object<'py, T>(py: Python<'py>, value: &T) -> Result<&'py PyAny>
+where
+    T: Serialize + ?Sized,
+{
+    let serializer = PyAnySerializer { py };
+    value.serialize(serializer)
+}
+
 pub struct PyAnySerializer<'py> {
-    phantom: std::marker::PhantomData<&'py ()>,
+    py: Python<'py>,
 }
 
 macro_rules! serialize_primitive {
@@ -40,8 +51,8 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
     serialize_primitive!(serialize_f64, f64, Primitive::F64);
     serialize_primitive!(serialize_char, char, Primitive::Char);
 
-    fn serialize_str(self, _v: &str) -> Result<Self::Ok> {
-        todo!()
+    fn serialize_str(self, v: &str) -> Result<Self::Ok> {
+        Ok(PyString::new(self.py, v))
     }
 
     fn serialize_bytes(self, _v: &[u8]) -> Result<Self::Ok> {
@@ -49,14 +60,15 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
     }
 
     fn serialize_none(self) -> Result<Self::Ok> {
-        todo!()
+        Ok(self.py.None().into_ref(self.py))
     }
 
     fn serialize_some<T>(self, value: &T) -> Result<Self::Ok>
     where
         T: ?Sized + Serialize,
     {
-        todo!()
+        let inner = value.serialize(self)?;
+        Ok(inner)
     }
 
     fn serialize_unit(self) -> Result<Self::Ok> {
@@ -80,7 +92,9 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
     where
         T: ?Sized + Serialize,
     {
-        todo!()
+        let dict = PyDict::new(self.py);
+        dict.set_item(name, value.serialize(self)?)?;
+        Ok(dict)
     }
 
     fn serialize_newtype_variant<T>(

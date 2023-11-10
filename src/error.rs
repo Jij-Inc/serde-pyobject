@@ -1,12 +1,21 @@
+use pyo3::PyErr;
 use serde::ser;
 use std::fmt::{self, Display};
 
 #[derive(Debug)]
-pub struct Error {}
+pub enum Error {
+    Py(PyErr),
+}
+
+impl From<PyErr> for Error {
+    fn from(err: PyErr) -> Self {
+        Error::Py(err)
+    }
+}
 
 impl ser::Error for Error {
     fn custom<T: Display>(_msg: T) -> Self {
-        Self {}
+        todo!()
     }
 }
 

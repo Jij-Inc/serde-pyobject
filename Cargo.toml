@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 pyo3 = "0.20.0"
 serde = "1.0.190"
+
+[dev-dependencies]
+pyo3 = { version = "0.20.0", features = ["auto-initialize"] }
