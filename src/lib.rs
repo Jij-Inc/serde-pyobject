@@ -46,6 +46,7 @@ mod tests {
         });
     }
 
+    // Rust `None` is serialized to Python `None`, and `Some(value)` is serialized as `value` is serialized
     #[test]
     fn serialize_option() {
         Python::with_gil(|py| {
@@ -57,6 +58,7 @@ mod tests {
         });
     }
 
+    // Rust `()` is serialized to Python `()`
     #[test]
     fn serialize_unit() {
         Python::with_gil(|py| {
@@ -68,6 +70,7 @@ mod tests {
     #[derive(Serialize)]
     struct Unit;
 
+    // `Unit` is serialized as an empty tuple `()`
     #[test]
     fn serialize_unit_struct() {
         Python::with_gil(|py| {
@@ -91,6 +94,7 @@ mod tests {
         B,
     }
 
+    // Unit struct `E::A` is serialized as a dict `{ "E": "A" }`
     #[test]
     fn serialize_unit_variant() {
         Python::with_gil(|py| {
@@ -140,6 +144,16 @@ mod tests {
         b: String,
     }
 
+    // Struct `A { a: 32, b: "test".to_string() }` is serialized as a dict of dict
+    //
+    // ```
+    // {
+    //   "A": {
+    //      "a": 32,
+    //      "b": "test"
+    //   }
+    // }
+    // ```
     #[test]
     fn serialize_struct() {
         Python::with_gil(|py| {
