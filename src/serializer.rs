@@ -1,8 +1,8 @@
 use crate::error::{Error, Result};
-use pyo3::types::PyDict;
+use pyo3::prelude::*;
 use serde::{ser, Serialize};
 
-pub struct PyDictSerializer<'py> {
+pub struct PyAnySerializer<'py> {
     phantom: std::marker::PhantomData<&'py ()>,
 }
 
@@ -14,18 +14,18 @@ macro_rules! serialize_primitive {
     };
 }
 
-impl<'py> ser::Serializer for PyDictSerializer<'py> {
-    type Ok = &'py PyDict;
+impl<'py> ser::Serializer for PyAnySerializer<'py> {
+    type Ok = &'py PyAny;
 
     type Error = Error;
 
-    type SerializeSeq = TypeTagSeq;
-    type SerializeTuple = TypeTagSeq;
-    type SerializeTupleStruct = TypeTagTupleStruct;
-    type SerializeTupleVariant = TypeTagTupleVariant;
-    type SerializeMap = TypeTagMap;
-    type SerializeStruct = TypeTagStruct;
-    type SerializeStructVariant = TypeTagStructVariant;
+    type SerializeSeq = Seq<'py>;
+    type SerializeTuple = Seq<'py>;
+    type SerializeTupleStruct = TupleStruct<'py>;
+    type SerializeTupleVariant = TupleVariant<'py>;
+    type SerializeMap = Map<'py>;
+    type SerializeStruct = Struct<'py>;
+    type SerializeStructVariant = StructVariant<'py>;
 
     serialize_primitive!(serialize_bool, bool, Primitive::Bool);
     serialize_primitive!(serialize_i8, i8, Primitive::I8);
@@ -41,31 +41,30 @@ impl<'py> ser::Serializer for PyDictSerializer<'py> {
     serialize_primitive!(serialize_char, char, Primitive::Char);
 
     fn serialize_str(self, _v: &str) -> Result<Self::Ok> {
-        Ok(TypeTag::String)
+        todo!()
     }
 
     fn serialize_bytes(self, _v: &[u8]) -> Result<Self::Ok> {
-        Ok(TypeTag::ByteArray)
+        todo!()
     }
 
     fn serialize_none(self) -> Result<Self::Ok> {
-        Ok(TypeTag::None)
+        todo!()
     }
 
     fn serialize_some<T>(self, value: &T) -> Result<Self::Ok>
     where
         T: ?Sized + Serialize,
     {
-        let tag = TypeTag::from_value(value);
-        Ok(TypeTag::Some(Box::new(tag)))
+        todo!()
     }
 
     fn serialize_unit(self) -> Result<Self::Ok> {
-        Ok(TypeTag::Unit)
+        todo!()
     }
 
     fn serialize_unit_struct(self, name: &'static str) -> Result<Self::Ok> {
-        Ok(TypeTag::UnitStruct { name })
+        todo!()
     }
 
     fn serialize_unit_variant(
@@ -74,18 +73,14 @@ impl<'py> ser::Serializer for PyDictSerializer<'py> {
         _variant_index: u32,
         variant: &'static str,
     ) -> Result<Self::Ok> {
-        Ok(TypeTag::UnitVariant { name, variant })
+        todo!()
     }
 
     fn serialize_newtype_struct<T>(self, name: &'static str, value: &T) -> Result<Self::Ok>
     where
         T: ?Sized + Serialize,
     {
-        let tag = TypeTag::from_value(value);
-        Ok(TypeTag::NewTypeStruct {
-            name,
-            inner: Box::new(tag),
-        })
+        todo!()
     }
 
     fn serialize_newtype_variant<T>(
@@ -98,24 +93,15 @@ impl<'py> ser::Serializer for PyDictSerializer<'py> {
     where
         T: ?Sized + Serialize,
     {
-        let tag = TypeTag::from_value(value);
-        Ok(TypeTag::NewTypeVariant {
-            name,
-            variant,
-            inner: Box::new(tag),
-        })
+        todo!()
     }
 
     fn serialize_seq(self, _len: Option<usize>) -> Result<Self::SerializeSeq> {
-        Ok(TypeTagSeq {
-            seq: Seq::default(),
-        })
+        todo!()
     }
 
     fn serialize_tuple(self, _len: usize) -> Result<Self::SerializeTuple> {
-        Ok(TypeTagSeq {
-            seq: Seq::default(),
-        })
+        todo!()
     }
 
     fn serialize_tuple_struct(
@@ -123,7 +109,7 @@ impl<'py> ser::Serializer for PyDictSerializer<'py> {
         name: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeTupleStruct> {
-        Ok(TypeTagTupleStruct {
+        Ok(TupleStruct {
             name,
             fields: Vec::new(),
         })
@@ -136,7 +122,7 @@ impl<'py> ser::Serializer for PyDictSerializer<'py> {
         variant: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeTupleVariant> {
-        Ok(TypeTagTupleVariant {
+        Ok(TupleVariant {
             name,
             variant,
             fields: Vec::new(),
@@ -144,14 +130,11 @@ impl<'py> ser::Serializer for PyDictSerializer<'py> {
     }
 
     fn serialize_map(self, _len: Option<usize>) -> Result<Self::SerializeMap> {
-        Ok(TypeTagMap {
-            map: Map::default(),
-            key: None,
-        })
+        todo!()
     }
 
     fn serialize_struct(self, name: &'static str, _len: usize) -> Result<Self::SerializeStruct> {
-        Ok(TypeTagStruct {
+        Ok(Struct {
             name,
             fields: Vec::new(),
         })
@@ -164,7 +147,7 @@ impl<'py> ser::Serializer for PyDictSerializer<'py> {
         variant: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeStructVariant> {
-        Ok(TypeTagStructVariant {
+        Ok(StructVariant {
             name,
             variant,
             fields: Vec::new(),
@@ -173,189 +156,157 @@ impl<'py> ser::Serializer for PyDictSerializer<'py> {
 }
 
 #[derive(Debug)]
-pub struct TypeTagSeq {
-    seq: Seq,
+pub struct Seq<'py> {
+    seq: Vec<&'py PyAny>,
 }
 
-impl ser::SerializeSeq for TypeTagSeq {
-    type Ok = TypeTag;
+impl<'py> ser::SerializeSeq for Seq<'py> {
+    type Ok = &'py PyAny;
     type Error = Error;
 
     fn serialize_element<T>(&mut self, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
-        let tag = TypeTag::from_value(value);
-        self.seq.push(tag);
-        Ok(())
+        todo!()
     }
 
     fn end(self) -> Result<Self::Ok> {
-        Ok(TypeTag::Seq(self.seq))
+        todo!()
     }
 }
 
-impl ser::SerializeTuple for TypeTagSeq {
-    type Ok = TypeTag;
+impl<'py> ser::SerializeTuple for Seq<'py> {
+    type Ok = &'py PyAny;
     type Error = Error;
 
     fn serialize_element<T>(&mut self, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
-        let tag = TypeTag::from_value(value);
-        self.seq.push(tag);
-        Ok(())
+        todo!()
     }
 
     fn end(self) -> Result<Self::Ok> {
-        Ok(TypeTag::Tuple(self.seq))
+        todo!()
     }
 }
 
 #[derive(Debug)]
-pub struct TypeTagTupleStruct {
+pub struct TupleStruct<'py> {
     name: &'static str,
-    fields: Vec<TypeTag>,
+    fields: Vec<&'py PyAny>,
 }
 
-impl ser::SerializeTupleStruct for TypeTagTupleStruct {
-    type Ok = TypeTag;
+impl<'py> ser::SerializeTupleStruct for TupleStruct<'py> {
+    type Ok = &'py PyAny;
     type Error = Error;
 
     fn serialize_field<T>(&mut self, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
-        let tag = TypeTag::from_value(value);
-        self.fields.push(tag);
-        Ok(())
+        todo!()
     }
 
     fn end(self) -> Result<Self::Ok> {
-        Ok(TypeTag::TupleStruct {
-            name: self.name,
-            fields: self.fields,
-        })
+        todo!()
     }
 }
 
 #[derive(Debug)]
-pub struct TypeTagTupleVariant {
+pub struct TupleVariant<'py> {
     name: &'static str,
     variant: &'static str,
-    fields: Vec<TypeTag>,
+    fields: Vec<&'py PyAny>,
 }
 
-impl ser::SerializeTupleVariant for TypeTagTupleVariant {
-    type Ok = TypeTag;
+impl<'py> ser::SerializeTupleVariant for TupleVariant<'py> {
+    type Ok = &'py PyAny;
     type Error = Error;
 
     fn serialize_field<T>(&mut self, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
-        let tag = TypeTag::from_value(value);
-        self.fields.push(tag);
-        Ok(())
+        todo!()
     }
 
     fn end(self) -> Result<Self::Ok> {
-        Ok(TypeTag::TupleVariant {
-            name: self.name,
-            variant: self.variant,
-            fields: self.fields,
-        })
+        todo!()
     }
 }
 
 #[derive(Debug)]
-pub struct TypeTagMap {
-    map: Map,
-    key: Option<TypeTag>,
+pub struct Map<'py> {
+    map: Vec<(&'py PyAny, &'py PyAny)>,
+    key: Option<&'py PyAny>,
 }
 
-impl ser::SerializeMap for TypeTagMap {
-    type Ok = TypeTag;
+impl<'py> ser::SerializeMap for Map<'py> {
+    type Ok = &'py PyAny;
     type Error = Error;
 
     fn serialize_key<T>(&mut self, key: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
-        let tag = TypeTag::from_value(key);
-        self.key = Some(tag);
-        Ok(())
+        todo!()
     }
 
     fn serialize_value<T>(&mut self, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
-        let tag = TypeTag::from_value(value);
-        let key = self.key.take().unwrap();
-        self.map.push(key, tag);
-        Ok(())
+        todo!()
     }
 
     fn end(self) -> Result<Self::Ok> {
-        assert!(self.key.is_none());
-        Ok(TypeTag::Map(self.map))
+        todo!()
     }
 }
 
 #[derive(Debug)]
-pub struct TypeTagStruct {
+pub struct Struct<'py> {
     name: &'static str,
-    fields: Vec<(&'static str, TypeTag)>,
+    fields: Vec<(&'static str, &'py PyAny)>,
 }
 
-impl ser::SerializeStruct for TypeTagStruct {
-    type Ok = TypeTag;
+impl<'py> ser::SerializeStruct for Struct<'py> {
+    type Ok = &'py PyAny;
     type Error = Error;
 
     fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
-        let tag = TypeTag::from_value(value);
-        self.fields.push((key, tag));
-        Ok(())
+        todo!()
     }
 
     fn end(self) -> Result<Self::Ok> {
-        Ok(TypeTag::Struct {
-            name: self.name,
-            fields: self.fields,
-        })
+        todo!()
     }
 }
 
 #[derive(Debug)]
-pub struct TypeTagStructVariant {
+pub struct StructVariant<'py> {
     name: &'static str,
     variant: &'static str,
-    fields: Vec<(&'static str, TypeTag)>,
+    fields: Vec<(&'static str, &'py PyAny)>,
 }
 
-impl ser::SerializeStructVariant for TypeTagStructVariant {
-    type Ok = TypeTag;
+impl<'py> ser::SerializeStructVariant for StructVariant<'py> {
+    type Ok = &'py PyAny;
     type Error = Error;
 
     fn serialize_field<T>(&mut self, key: &'static str, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
-        let tag = TypeTag::from_value(value);
-        self.fields.push((key, tag));
-        Ok(())
+        todo!()
     }
 
     fn end(self) -> Result<Self::Ok> {
-        Ok(TypeTag::StructVariant {
-            name: self.name,
-            variant: self.variant,
-            fields: self.fields,
-        })
+        todo!()
     }
 }
