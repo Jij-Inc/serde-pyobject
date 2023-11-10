@@ -124,7 +124,9 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
     where
         T: ?Sized + Serialize,
     {
-        todo!()
+        let dict = PyDict::new(self.py);
+        dict.set_item(name, (variant, value.serialize(self)?))?;
+        Ok(dict)
     }
 
     fn serialize_seq(self, _len: Option<usize>) -> Result<Self::SerializeSeq> {

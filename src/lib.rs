@@ -68,18 +68,18 @@ mod tests {
     }
 
     #[derive(Serialize)]
-    struct Unit;
+    struct UnitStruct;
 
     // `Unit` is serialized as an empty tuple `()`
     #[test]
     fn serialize_unit_struct() {
         Python::with_gil(|py| {
-            let obj = as_py_object(py, &Unit {}).unwrap();
+            let obj = as_py_object(py, &UnitStruct {}).unwrap();
             assert!(obj.is_instance_of::<PyDict>());
             let value = obj
                 .downcast::<PyDict>()
                 .unwrap()
-                .get_item("Unit")
+                .get_item("UnitStruct")
                 .unwrap()
                 .unwrap()
                 .extract::<&PyTuple>()
@@ -89,33 +89,33 @@ mod tests {
     }
 
     #[derive(Serialize)]
-    enum E {
+    enum UnitVariant {
         A,
         B,
     }
 
-    // Unit struct `E::A` is serialized as a dict `{ "E": "A" }`
+    // Unit variant `E::A` is serialized as a dict `{ "E": "A" }`
     #[test]
     fn serialize_unit_variant() {
         Python::with_gil(|py| {
-            let obj = as_py_object(py, &E::A).unwrap();
+            let obj = as_py_object(py, &UnitVariant::A).unwrap();
             assert!(obj.is_instance_of::<PyDict>());
             let tag = obj
                 .downcast::<PyDict>()
                 .unwrap()
-                .get_item("E")
+                .get_item("UnitVariant")
                 .unwrap()
                 .unwrap()
                 .extract::<&str>()
                 .unwrap();
             assert_eq!(tag, "A");
 
-            let obj = as_py_object(py, &E::B).unwrap();
+            let obj = as_py_object(py, &UnitVariant::B).unwrap();
             assert!(obj.is_instance_of::<PyDict>());
             let tag = obj
                 .downcast::<PyDict>()
                 .unwrap()
-                .get_item("E")
+                .get_item("UnitVariant")
                 .unwrap()
                 .unwrap()
                 .extract::<&str>()
@@ -126,7 +126,28 @@ mod tests {
 
     // TODO newtype struct
 
-    // TODO newtype variant
+    #[derive(Serialize)]
+    enum NewtypeVariant {
+        N(u8),
+    }
+
+    #[test]
+    fn serialize_newtype_variant() {
+        Python::with_gil(|py| {
+            let obj = as_py_object(py, &NewtypeVariant::N(3)).unwrap();
+            assert!(obj.is_instance_of::<PyDict>());
+            let (tag, value) = obj
+                .downcast::<PyDict>()
+                .unwrap()
+                .get_item("NewtypeVariant")
+                .unwrap()
+                .unwrap()
+                .extract::<(&str, u8)>()
+                .unwrap();
+            assert_eq!(tag, "N");
+            assert_eq!(value, 3);
+        });
+    }
 
     // TODO seq
 
@@ -139,7 +160,7 @@ mod tests {
     // TODO map
 
     #[derive(Serialize)]
-    struct A {
+    struct Struct {
         a: i32,
         b: String,
     }
@@ -159,7 +180,7 @@ mod tests {
         Python::with_gil(|py| {
             let obj = as_py_object(
                 py,
-                &A {
+                &Struct {
                     a: 32,
                     b: "test".to_string(),
                 },
