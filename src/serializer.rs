@@ -1,7 +1,7 @@
 use crate::error::{Error, Result};
 use pyo3::{
     prelude::*,
-    types::{PyBool, PyDict, PyFloat, PyString, PyTuple},
+    types::{PyBool, PyByteArray, PyDict, PyFloat, PyList, PyString, PyTuple},
 };
 use serde::{ser, Serialize};
 
@@ -68,8 +68,8 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
         Ok(PyString::new(self.py, v))
     }
 
-    fn serialize_bytes(self, _v: &[u8]) -> Result<Self::Ok> {
-        todo!()
+    fn serialize_bytes(self, v: &[u8]) -> Result<Self::Ok> {
+        Ok(PyByteArray::new(self.py, v))
     }
 
     fn serialize_none(self) -> Result<Self::Ok> {
@@ -130,11 +130,17 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
     }
 
     fn serialize_seq(self, _len: Option<usize>) -> Result<Self::SerializeSeq> {
-        todo!()
+        Ok(Seq {
+            py: self.py,
+            seq: Vec::new(),
+        })
     }
 
     fn serialize_tuple(self, _len: usize) -> Result<Self::SerializeTuple> {
-        todo!()
+        Ok(Seq {
+            py: self.py,
+            seq: Vec::new(),
+        })
     }
 
     fn serialize_tuple_struct(
@@ -143,6 +149,7 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
         _len: usize,
     ) -> Result<Self::SerializeTupleStruct> {
         Ok(TupleStruct {
+            py: self.py,
             name,
             fields: Vec::new(),
         })
@@ -156,6 +163,7 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
         _len: usize,
     ) -> Result<Self::SerializeTupleVariant> {
         Ok(TupleVariant {
+            py: self.py,
             name,
             variant,
             fields: Vec::new(),
@@ -163,13 +171,18 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
     }
 
     fn serialize_map(self, _len: Option<usize>) -> Result<Self::SerializeMap> {
-        todo!()
+        Ok(Map {
+            py: self.py,
+            map: PyDict::new(self.py),
+            key: None,
+        })
     }
 
     fn serialize_struct(self, name: &'static str, _len: usize) -> Result<Self::SerializeStruct> {
         Ok(Struct {
+            py: self.py,
             name,
-            fields: Vec::new(),
+            fields: PyDict::new(self.py),
         })
     }
 
@@ -181,15 +194,16 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
         _len: usize,
     ) -> Result<Self::SerializeStructVariant> {
         Ok(StructVariant {
+            py: self.py,
             name,
             variant,
-            fields: Vec::new(),
+            fields: PyDict::new(self.py),
         })
     }
 }
 
-#[derive(Debug)]
 pub struct Seq<'py> {
+    py: Python<'py>,
     seq: Vec<&'py PyAny>,
 }
 
@@ -201,11 +215,13 @@ impl<'py> ser::SerializeSeq for Seq<'py> {
     where
         T: ?Sized + Serialize,
     {
-        todo!()
+        self.seq
+            .push(value.serialize(PyAnySerializer { py: self.py })?);
+        Ok(())
     }
 
     fn end(self) -> Result<Self::Ok> {
-        todo!()
+        Ok(PyList::new(self.py, self.seq))
     }
 }
 
@@ -217,16 +233,18 @@ impl<'py> ser::SerializeTuple for Seq<'py> {
     where
         T: ?Sized + Serialize,
     {
-        todo!()
+        self.seq
+            .push(value.serialize(PyAnySerializer { py: self.py })?);
+        Ok(())
     }
 
     fn end(self) -> Result<Self::Ok> {
-        todo!()
+        Ok(PyTuple::new(self.py, self.seq))
     }
 }
 
-#[derive(Debug)]
 pub struct TupleStruct<'py> {
+    py: Python<'py>,
     name: &'static str,
     fields: Vec<&'py PyAny>,
 }
@@ -239,16 +257,21 @@ impl<'py> ser::SerializeTupleStruct for TupleStruct<'py> {
     where
         T: ?Sized + Serialize,
     {
-        todo!()
+        self.fields
+            .push(value.serialize(PyAnySerializer { py: self.py })?);
+        Ok(())
     }
 
     fn end(self) -> Result<Self::Ok> {
-        todo!()
+        let inner = PyList::new(self.py, self.fields);
+        let dict = PyDict::new(self.py);
+        dict.set_item(self.name, inner)?;
+        Ok(dict)
     }
 }
 
-#[derive(Debug)]
 pub struct TupleVariant<'py> {
+    py: Python<'py>,
     name: &'static str,
     variant: &'static str,
     fields: Vec<&'py PyAny>,
@@ -262,17 +285,22 @@ impl<'py> ser::SerializeTupleVariant for TupleVariant<'py> {
     where
         T: ?Sized + Serialize,
     {
-        todo!()
+        self.fields
+            .push(value.serialize(PyAnySerializer { py: self.py })?);
+        Ok(())
     }
 
     fn end(self) -> Result<Self::Ok> {
-        todo!()
+        let inner = PyTuple::new(self.py, self.fields);
+        let dict = PyDict::new(self.py);
+        dict.set_item(self.name, (self.variant, inner))?;
+        Ok(dict)
     }
 }
 
-#[derive(Debug)]
 pub struct Map<'py> {
-    map: Vec<(&'py PyAny, &'py PyAny)>,
+    py: Python<'py>,
+    map: &'py PyDict,
     key: Option<&'py PyAny>,
 }
 
@@ -284,25 +312,32 @@ impl<'py> ser::SerializeMap for Map<'py> {
     where
         T: ?Sized + Serialize,
     {
-        todo!()
+        self.key = Some(key.serialize(PyAnySerializer { py: self.py })?);
+        Ok(())
     }
 
     fn serialize_value<T>(&mut self, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
-        todo!()
+        let key = self
+            .key
+            .take()
+            .expect("Invalid Serialize implementation. Key is missing.");
+        self.map
+            .set_item(key, value.serialize(PyAnySerializer { py: self.py })?)?;
+        Ok(())
     }
 
     fn end(self) -> Result<Self::Ok> {
-        todo!()
+        Ok(self.map)
     }
 }
 
-#[derive(Debug)]
 pub struct Struct<'py> {
+    py: Python<'py>,
     name: &'static str,
-    fields: Vec<(&'static str, &'py PyAny)>,
+    fields: &'py PyDict,
 }
 
 impl<'py> ser::SerializeStruct for Struct<'py> {
@@ -313,19 +348,23 @@ impl<'py> ser::SerializeStruct for Struct<'py> {
     where
         T: ?Sized + Serialize,
     {
-        todo!()
+        self.fields
+            .set_item(key, value.serialize(PyAnySerializer { py: self.py })?)?;
+        Ok(())
     }
 
     fn end(self) -> Result<Self::Ok> {
-        todo!()
+        let dict = PyDict::new(self.py);
+        dict.set_item(self.name, self.fields)?;
+        Ok(dict)
     }
 }
 
-#[derive(Debug)]
 pub struct StructVariant<'py> {
+    py: Python<'py>,
     name: &'static str,
     variant: &'static str,
-    fields: Vec<(&'static str, &'py PyAny)>,
+    fields: &'py PyDict,
 }
 
 impl<'py> ser::SerializeStructVariant for StructVariant<'py> {
@@ -336,10 +375,14 @@ impl<'py> ser::SerializeStructVariant for StructVariant<'py> {
     where
         T: ?Sized + Serialize,
     {
-        todo!()
+        self.fields
+            .set_item(key, value.serialize(PyAnySerializer { py: self.py })?)?;
+        Ok(())
     }
 
     fn end(self) -> Result<Self::Ok> {
-        todo!()
+        let dict = PyDict::new(self.py);
+        dict.set_item(self.name, (self.variant, self.fields))?;
+        Ok(dict)
     }
 }

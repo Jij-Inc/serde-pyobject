@@ -1,6 +1,6 @@
 use pyo3::{
     prelude::*,
-    types::{PyDict, PyFloat, PyLong, PyString, PyTuple},
+    types::{PyDict, PyFloat, PyList, PyLong, PyString, PyTuple},
 };
 use serde::Serialize;
 
@@ -145,9 +145,31 @@ fn serialize_newtype_variant() {
     });
 }
 
-// TODO seq
+#[test]
+fn serialize_seq() {
+    Python::with_gil(|py| {
+        let obj = as_py_object(py, &vec![1, 2, 3]).unwrap();
+        assert!(obj.is_instance_of::<PyList>());
+        let value = obj.downcast::<PyList>().unwrap();
+        assert_eq!(value.get_item(0).unwrap().extract::<i32>().unwrap(), 1);
+        assert_eq!(value.get_item(1).unwrap().extract::<i32>().unwrap(), 2);
+        assert_eq!(value.get_item(2).unwrap().extract::<i32>().unwrap(), 3);
+    });
+}
 
-// TODO tuple
+#[test]
+fn serialize_tuple() {
+    Python::with_gil(|py| {
+        let obj = as_py_object(py, &(3, "test")).unwrap();
+        assert!(obj.is_instance_of::<PyTuple>());
+        let value = obj.downcast::<PyTuple>().unwrap();
+        assert_eq!(value.get_item(0).unwrap().extract::<i32>().unwrap(), 3);
+        assert_eq!(
+            value.get_item(1).unwrap().extract::<&str>().unwrap(),
+            "test"
+        );
+    });
+}
 
 // TODO tuple struct
 
