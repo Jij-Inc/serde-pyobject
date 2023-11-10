@@ -45,7 +45,7 @@ jobs:
     needs: [rust]
     environment:
       name: "Document"
-      url: ${{ steps.deployment.outputs.page_url }}/serde_pydict
+      url: ${{ steps.deployment.outputs.page_url }}/serde_pyobject
     runs-on: ubuntu-latest
     steps:
       - name: Download rustdoc
