@@ -23,13 +23,13 @@ Python::with_gil(|py| {
 });
 ```
 
-## Mapping between Python and serde data model
+## Mapping between Python and [serde data model]
 
-[serde data model](https://serde.rs/data-model.html) is a data model used in serde.
+[serde data model]: https://serde.rs/data-model.html
 
 ### Serialize
 
-| serde data model | PyO3 type | Rust input | Python output |
+| [serde data model] | PyO3 type | Rust input | Python output |
 |------------------|-----------|------------|---------------|
 | `i8`, `i16`, `i32`, `i64`, `isize`, <br> `u8`, `u16`, `u32`, `u64`, `usize` | `PyLong` | `123` | `123` |
 | `f32`, `f64` | `PyFloat` | `1.0` | `1.0` |
