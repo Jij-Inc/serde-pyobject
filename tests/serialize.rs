@@ -9,10 +9,10 @@ use serde_pyobject::*;
 #[test]
 fn serialize_string() {
     Python::with_gil(|py| {
-        let obj = as_pyobject(py, &'a').unwrap();
+        let obj = to_pyobject(py, &'a').unwrap();
         assert!(obj.is_instance_of::<PyString>());
 
-        let obj = as_pyobject(py, "test").unwrap();
+        let obj = to_pyobject(py, "test").unwrap();
         assert!(obj.is_instance_of::<PyString>());
     });
 }
@@ -20,13 +20,13 @@ fn serialize_string() {
 #[test]
 fn serialize_long() {
     Python::with_gil(|py| {
-        let obj = as_pyobject(py, &1_u16).unwrap();
+        let obj = to_pyobject(py, &1_u16).unwrap();
         assert!(obj.is_instance_of::<PyLong>());
 
-        let obj = as_pyobject(py, &1_i64).unwrap();
+        let obj = to_pyobject(py, &1_i64).unwrap();
         assert!(obj.is_instance_of::<PyLong>());
 
-        let obj = as_pyobject(py, &1_i64).unwrap();
+        let obj = to_pyobject(py, &1_i64).unwrap();
         assert!(obj.is_instance_of::<PyLong>());
     });
 }
@@ -34,10 +34,10 @@ fn serialize_long() {
 #[test]
 fn serialize_float() {
     Python::with_gil(|py| {
-        let obj = as_pyobject(py, &3.1_f32).unwrap();
+        let obj = to_pyobject(py, &3.1_f32).unwrap();
         assert!(obj.is_instance_of::<PyFloat>());
 
-        let obj = as_pyobject(py, &-3.1_f64).unwrap();
+        let obj = to_pyobject(py, &-3.1_f64).unwrap();
         assert!(obj.is_instance_of::<PyFloat>());
     });
 }
@@ -46,10 +46,10 @@ fn serialize_float() {
 #[test]
 fn serialize_option() {
     Python::with_gil(|py| {
-        let obj = as_pyobject(py, &Option::<i32>::None).unwrap();
+        let obj = to_pyobject(py, &Option::<i32>::None).unwrap();
         assert!(obj.is(&py.None()));
 
-        let obj = as_pyobject(py, &Some(1_i64)).unwrap();
+        let obj = to_pyobject(py, &Some(1_i64)).unwrap();
         assert!(obj.is_instance_of::<PyLong>());
     });
 }
@@ -58,7 +58,7 @@ fn serialize_option() {
 #[test]
 fn serialize_unit() {
     Python::with_gil(|py| {
-        let obj = as_pyobject(py, &()).unwrap();
+        let obj = to_pyobject(py, &()).unwrap();
         assert!(obj.is(PyTuple::empty(py)));
     });
 }
@@ -70,7 +70,7 @@ struct UnitStruct;
 #[test]
 fn serialize_unit_struct() {
     Python::with_gil(|py| {
-        let obj = as_pyobject(py, &UnitStruct {}).unwrap();
+        let obj = to_pyobject(py, &UnitStruct {}).unwrap();
         assert!(obj.is_instance_of::<PyDict>());
         let value = obj
             .downcast::<PyDict>()
@@ -94,7 +94,7 @@ enum UnitVariant {
 #[test]
 fn serialize_unit_variant() {
     Python::with_gil(|py| {
-        let obj = as_pyobject(py, &UnitVariant::A).unwrap();
+        let obj = to_pyobject(py, &UnitVariant::A).unwrap();
         assert!(obj.is_instance_of::<PyDict>());
         let tag = obj
             .downcast::<PyDict>()
@@ -106,7 +106,7 @@ fn serialize_unit_variant() {
             .unwrap();
         assert_eq!(tag, "A");
 
-        let obj = as_pyobject(py, &UnitVariant::B).unwrap();
+        let obj = to_pyobject(py, &UnitVariant::B).unwrap();
         assert!(obj.is_instance_of::<PyDict>());
         let tag = obj
             .downcast::<PyDict>()
@@ -130,7 +130,7 @@ enum NewtypeVariant {
 #[test]
 fn serialize_newtype_variant() {
     Python::with_gil(|py| {
-        let obj = as_pyobject(py, &NewtypeVariant::N(3)).unwrap();
+        let obj = to_pyobject(py, &NewtypeVariant::N(3)).unwrap();
         assert!(obj.is_instance_of::<PyDict>());
         let (tag, value) = obj
             .downcast::<PyDict>()
@@ -148,7 +148,7 @@ fn serialize_newtype_variant() {
 #[test]
 fn serialize_seq() {
     Python::with_gil(|py| {
-        let obj = as_pyobject(py, &vec![1, 2, 3]).unwrap();
+        let obj = to_pyobject(py, &vec![1, 2, 3]).unwrap();
         assert!(obj.is_instance_of::<PyList>());
         let value = obj.downcast::<PyList>().unwrap();
         assert_eq!(value.get_item(0).unwrap().extract::<i32>().unwrap(), 1);
@@ -160,7 +160,7 @@ fn serialize_seq() {
 #[test]
 fn serialize_tuple() {
     Python::with_gil(|py| {
-        let obj = as_pyobject(py, &(3, "test")).unwrap();
+        let obj = to_pyobject(py, &(3, "test")).unwrap();
         assert!(obj.is_instance_of::<PyTuple>());
         let value = obj.downcast::<PyTuple>().unwrap();
         assert_eq!(value.get_item(0).unwrap().extract::<i32>().unwrap(), 3);
@@ -196,7 +196,7 @@ struct Struct {
 #[test]
 fn serialize_struct() {
     Python::with_gil(|py| {
-        let obj = as_pyobject(
+        let obj = to_pyobject(
             py,
             &Struct {
                 a: 32,

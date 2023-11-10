@@ -5,7 +5,7 @@ use pyo3::{
 };
 use serde::{ser, Serialize};
 
-pub fn as_pyobject<'py, T>(py: Python<'py>, value: &T) -> Result<&'py PyAny>
+pub fn to_pyobject<'py, T>(py: Python<'py>, value: &T) -> Result<&'py PyAny>
 where
     T: Serialize + ?Sized,
 {

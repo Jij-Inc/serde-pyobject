@@ -18,7 +18,7 @@ struct A {
 
 Python::with_gil(|py| {
     let a = A { a: 1, b: "test".to_string() };
-    let obj: &PyAny = serde_pyobject::as_pyobject(py, &a).unwrap();
+    let obj: &PyAny = serde_pyobject::to_pyobject(py, &a).unwrap();
     assert!(obj.is_instance_of::<PyDict>());
 });
 ```
