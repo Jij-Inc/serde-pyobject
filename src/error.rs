@@ -1,27 +1,26 @@
-use pyo3::PyErr;
+use pyo3::{exceptions::PyRuntimeError, PyErr};
 use serde::ser;
 use std::fmt::{self, Display};
 
+/// New-type wrapper of `PyErr` to implement `serde::ser::Error`.
 #[derive(Debug)]
-pub enum Error {
-    Py(PyErr),
-}
+pub struct Error(pub PyErr);
 
 impl From<PyErr> for Error {
     fn from(err: PyErr) -> Self {
-        Error::Py(err)
+        Error(err)
     }
 }
 
 impl ser::Error for Error {
-    fn custom<T: Display>(_msg: T) -> Self {
-        todo!()
+    fn custom<T: Display>(msg: T) -> Self {
+        Error(PyRuntimeError::new_err(msg.to_string()))
     }
 }
 
 impl Display for Error {
-    fn fmt(&self, _formatter: &mut fmt::Formatter) -> fmt::Result {
-        Ok(())
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        self.0.fmt(formatter)
     }
 }
 
