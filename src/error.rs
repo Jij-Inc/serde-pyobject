@@ -1,5 +1,5 @@
 use pyo3::{exceptions::PyRuntimeError, PyErr};
-use serde::ser;
+use serde::{de, ser};
 use std::fmt::{self, Display};
 
 /// New-type wrapper of `PyErr` to implement `serde::ser::Error`.
@@ -13,6 +13,12 @@ impl From<PyErr> for Error {
 }
 
 impl ser::Error for Error {
+    fn custom<T: Display>(msg: T) -> Self {
+        Error(PyRuntimeError::new_err(msg.to_string()))
+    }
+}
+
+impl de::Error for Error {
     fn custom<T: Display>(msg: T) -> Self {
         Error(PyRuntimeError::new_err(msg.to_string()))
     }
