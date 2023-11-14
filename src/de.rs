@@ -27,7 +27,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         if self.0.is_instance_of::<PyLong>() {
             return visitor.visit_i64(self.0.extract()?);
         }
-        todo!()
+        unreachable!("Unsupported type: {}", self.0.get_type());
     }
 
     forward_to_deserialize_any! {
@@ -109,6 +109,53 @@ mod test {
             let map: BTreeMap<String, String> = from_pyobject(dict.into_ref(py)).unwrap();
             assert_eq!(map.get("a"), Some(&"hom".to_string()));
             assert_eq!(map.get("b"), Some(&"test".to_string()));
+        });
+    }
+
+    #[derive(Debug, PartialEq, Deserialize)]
+    struct A {
+        a: i32,
+        b: String,
+    }
+
+    #[test]
+    fn struct_from_pydict() {
+        Python::with_gil(|py| {
+            let dict = pydict! {
+                "a" => 1,
+                "b" => "test"
+            }
+            .unwrap();
+            let a: A = from_pyobject(dict.into_ref(py)).unwrap();
+            assert_eq!(
+                a,
+                A {
+                    a: 1,
+                    b: "test".to_string()
+                }
+            );
+        });
+    }
+
+    #[test]
+    fn struct_from_nested_pydict() {
+        Python::with_gil(|py| {
+            let dict = pydict! {
+                "A" => pydict! {
+                    "a" => 1,
+                    "b" => "test"
+                }
+                .unwrap()
+            }
+            .unwrap();
+            let a: A = from_pyobject(dict.into_ref(py)).unwrap();
+            assert_eq!(
+                a,
+                A {
+                    a: 1,
+                    b: "test".to_string()
+                }
+            );
         });
     }
 }
