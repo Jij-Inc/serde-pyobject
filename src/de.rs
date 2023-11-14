@@ -30,10 +30,29 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         unreachable!("Unsupported type: {}", self.0.get_type());
     }
 
+    fn deserialize_struct<V: de::Visitor<'de>>(
+        self,
+        name: &'static str,
+        _fields: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value> {
+        // Nested dict `{ "A": { "a": 1, "b": 2 } }` is deserialized as `A { a: 1, b: 2 }`
+        if self.0.is_instance_of::<PyDict>() {
+            let dict: &PyDict = self.0.extract()?;
+            if let Some(inner) = dict.get_item(name)? {
+                if let Ok(inner) = inner.extract() {
+                    return visitor.visit_map(MapDeserializer::new(inner));
+                }
+            }
+        }
+        // Default to `any` case
+        self.deserialize_any(visitor)
+    }
+
     forward_to_deserialize_any! {
         bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
         bytes byte_buf option unit unit_struct newtype_struct seq tuple
-        tuple_struct map struct enum identifier ignored_any
+        tuple_struct map enum identifier ignored_any
     }
 }
 
