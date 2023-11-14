@@ -1,6 +1,10 @@
 mod de;
 mod error;
+mod pydict;
 mod ser;
+
+/// Re-export of `pyo3` crate.
+pub use pyo3;
 
 pub use de::from_pyobject;
 pub use error::Error;
