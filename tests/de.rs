@@ -121,8 +121,25 @@ fn newtype_variant_from_pyobject() {
     });
 }
 
-// TODO seq
-// TODO tuple
+// seq
+#[test]
+fn seq_from_pyobject() {
+    Python::with_gil(|py| {
+        let list = PyList::new(py, &[1, 2, 3]);
+        let seq: Vec<i32> = from_pyobject(list).unwrap();
+        assert_eq!(seq, vec![1, 2, 3]);
+    });
+}
+
+// tuple
+#[test]
+fn tuple_from_pyobject() {
+    Python::with_gil(|py| {
+        let tuple = PyTuple::new(py, &[1, 2, 3]);
+        let tuple: (i32, i32, i32) = from_pyobject(tuple).unwrap();
+        assert_eq!(tuple, (1, 2, 3));
+    });
+}
 
 // tuple struct
 #[derive(Debug, PartialEq, Deserialize)]
