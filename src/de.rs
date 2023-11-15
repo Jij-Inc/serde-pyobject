@@ -21,6 +21,9 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         if self.0.is_instance_of::<PyDict>() {
             return visitor.visit_map(MapDeserializer::new(self.0.extract()?));
         }
+        if self.0.is_instance_of::<PyList>() {
+            return visitor.visit_seq(SeqDeserializer::new(self.0.extract()?));
+        }
         if self.0.is_instance_of::<PyString>() {
             return visitor.visit_str(self.0.extract()?);
         }
@@ -58,6 +61,8 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         if self.0.is_instance_of::<PyDict>() {
             let dict: &PyDict = self.0.extract()?;
             if let Some(inner) = dict.get_item(name)? {
+                // Visitor of `#[derive(Deserialize)] struct A(u8);` requires tuple struct,
+                // and thus use 1-element "tuple" here
                 return visitor.visit_seq(SeqDeserializer {
                     seq_reversed: vec![inner],
                 });
@@ -76,6 +81,16 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
 
 struct SeqDeserializer<'py> {
     seq_reversed: Vec<&'py PyAny>,
+}
+
+impl<'py> SeqDeserializer<'py> {
+    fn new(list: &'py PyList) -> Self {
+        let mut seq_reversed = Vec::new();
+        for item in list.iter().rev() {
+            seq_reversed.push(item);
+        }
+        Self { seq_reversed }
+    }
 }
 
 impl<'de, 'py> SeqAccess<'de> for SeqDeserializer<'py> {

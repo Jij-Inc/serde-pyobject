@@ -1,6 +1,6 @@
 mod de;
 mod error;
-mod pydict;
+mod pylit;
 mod ser;
 
 /// Re-export of `pyo3` crate.
