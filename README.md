@@ -4,7 +4,7 @@ PyO3's PyAny as a serde data format
 
 ## Usage
 
-- Convert `T: Serialize` into `&'py PyAny`:
+### Serialize `T: Serialize` into `&'py PyAny`:
 
 ```rust
 use serde::Serialize;
@@ -20,6 +20,30 @@ Python::with_gil(|py| {
     let a = A { a: 1, b: "test".to_string() };
     let obj: &PyAny = serde_pyobject::to_pyobject(py, &a).unwrap();
     assert!(obj.is_instance_of::<PyDict>());
+});
+```
+
+### Deserialize `&'py PyAny` into `T: Deserialize<'de>`:
+
+```rust
+use serde::Deserialize;
+use pyo3::{Python, types::{PyAny, PyDict}};
+use serde_pyobject::{from_pyobject, pydict};
+
+#[derive(Debug, PartialEq, Deserialize)]
+struct A {
+    a: u32,
+    b: String,
+}
+
+Python::with_gil(|py| {
+    let a: &PyDict = pydict! { py,
+      "a" => 1,
+      "b" => "test"
+    }
+    .unwrap();
+    let a: A = from_pyobject(a).unwrap();
+    assert_eq!(a, A { a: 1, b: "test".to_string() });
 });
 ```
 
