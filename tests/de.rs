@@ -3,6 +3,7 @@ use serde::Deserialize;
 use serde_pyobject::{from_pyobject, pydict};
 use std::collections::BTreeMap;
 
+// primitive
 #[test]
 fn i32_from_pyobject() {
     Python::with_gil(|py| {
@@ -12,6 +13,34 @@ fn i32_from_pyobject() {
     });
 }
 
+// TODO option
+// TODO unit
+// TODO unit struct
+// TODO unit variant
+
+// newtype struct
+#[derive(Debug, PartialEq, Deserialize)]
+struct NewTypeStruct(u8);
+
+#[test]
+fn newtype_struct_from_pyobject() {
+    Python::with_gil(|py| {
+        let dict = pydict! {
+            "NewTypeStruct" => 1
+        }
+        .unwrap();
+        let obj: NewTypeStruct = from_pyobject(dict.into_ref(py)).unwrap();
+        assert_eq!(obj, NewTypeStruct(1));
+    });
+}
+
+// TODO newtype variant
+// TODO seq
+// TODO tuple
+// TODO tuple struct
+// TODO tuple variant
+
+// map
 #[test]
 fn btreemap_from_pydict() {
     Python::with_gil(|py| {
@@ -26,6 +55,7 @@ fn btreemap_from_pydict() {
     });
 }
 
+// struct
 #[derive(Debug, PartialEq, Deserialize)]
 struct A {
     a: i32,
@@ -73,17 +103,4 @@ fn struct_from_nested_pydict() {
     });
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
-struct NewTypeStruct(u8);
-
-#[test]
-fn newtype_struct_from_pyobject() {
-    Python::with_gil(|py| {
-        let dict = pydict! {
-            "NewTypeStruct" => 1
-        }
-        .unwrap();
-        let obj: NewTypeStruct = from_pyobject(dict.into_ref(py)).unwrap();
-        assert_eq!(obj, NewTypeStruct(1));
-    });
-}
+// TODO struct variant
