@@ -158,7 +158,24 @@ fn tuple_struct_from_pyobject() {
     });
 }
 
-// TODO tuple variant
+// tuple variant
+#[derive(Debug, PartialEq, Deserialize)]
+enum TupleVariant {
+    T(u8, u8),
+}
+
+#[test]
+fn tuple_variant_from_pyobject() {
+    Python::with_gil(|py| {
+        let dict = pydict! {
+            py,
+            "TupleVariant" => ("T", (1, 2))
+        }
+        .unwrap();
+        let obj: TupleVariant = from_pyobject(dict).unwrap();
+        assert_eq!(obj, TupleVariant::T(1, 2));
+    });
+}
 
 // map
 #[test]
@@ -223,4 +240,25 @@ fn struct_from_nested_pydict() {
     });
 }
 
-// TODO struct variant
+// struct variant
+#[derive(Debug, PartialEq, Deserialize)]
+enum StructVariant {
+    S { r: u8, g: u8, b: u8 },
+}
+
+#[test]
+fn struct_variant_from_pyobject() {
+    Python::with_gil(|py| {
+        let dict = pydict! {
+            py,
+            "StructVariant" => ("S", pydict! {
+                "r" => 1,
+                "g" => 2,
+                "b" => 3
+            }.unwrap())
+        }
+        .unwrap();
+        let obj: StructVariant = from_pyobject(dict).unwrap();
+        assert_eq!(obj, StructVariant::S { r: 1, g: 2, b: 3 });
+    });
+}
