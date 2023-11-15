@@ -7,9 +7,27 @@ use std::collections::BTreeMap;
 #[test]
 fn i32_from_pyobject() {
     Python::with_gil(|py| {
-        let py_int: Py<PyAny> = 42.into_py(py);
-        let i32: i32 = from_pyobject(py_int.into_ref(py)).unwrap();
-        assert_eq!(i32, 42);
+        let any: Py<PyAny> = 42.into_py(py);
+        let i: i32 = from_pyobject(any.into_ref(py)).unwrap();
+        assert_eq!(i, 42);
+    });
+}
+
+#[test]
+fn f32_from_pyobject() {
+    Python::with_gil(|py| {
+        let any: Py<PyAny> = (0.1).into_py(py);
+        let x: f32 = from_pyobject(any.into_ref(py)).unwrap();
+        assert_eq!(x, 0.1);
+    });
+}
+
+#[test]
+fn bool_from_pyobject() {
+    Python::with_gil(|py| {
+        let any: Py<PyAny> = true.into_py(py);
+        let x: bool = from_pyobject(any.into_ref(py)).unwrap();
+        assert_eq!(x, true);
     });
 }
 

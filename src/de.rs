@@ -30,8 +30,15 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         if self.0.is_instance_of::<PyString>() {
             return visitor.visit_str(self.0.extract()?);
         }
+        if self.0.is_instance_of::<PyBool>() {
+            // must be match before PyLong
+            return visitor.visit_bool(self.0.extract()?);
+        }
         if self.0.is_instance_of::<PyLong>() {
             return visitor.visit_i64(self.0.extract()?);
+        }
+        if self.0.is_instance_of::<PyFloat>() {
+            return visitor.visit_f64(self.0.extract()?);
         }
         if self.0.is_none() {
             return visitor.visit_none();
