@@ -103,7 +103,24 @@ fn newtype_struct_from_pyobject() {
     });
 }
 
-// TODO newtype variant
+// newtype variant
+#[derive(Debug, PartialEq, Deserialize)]
+enum NewTypeVariant {
+    N(u8),
+}
+
+#[test]
+fn newtype_variant_from_pyobject() {
+    Python::with_gil(|py| {
+        let dict = pydict! {
+            "NewTypeVariant" => ("N", 41)
+        }
+        .unwrap();
+        let obj: NewTypeVariant = from_pyobject(dict.into_ref(py)).unwrap();
+        assert_eq!(obj, NewTypeVariant::N(41));
+    });
+}
+
 // TODO seq
 // TODO tuple
 // TODO tuple struct

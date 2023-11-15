@@ -122,7 +122,17 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         if self.0.is_instance_of::<PyDict>() {
             let dict: &PyDict = self.0.extract()?;
             if let Some(value) = dict.get_item(name)? {
-                if let Ok(variant) = value.extract() {
+                if value.is_instance_of::<PyTuple>() {
+                    let tuple: &PyTuple = value.extract()?;
+                    if tuple.len() == 2 {
+                        return visitor.visit_enum(EnumDeserializer {
+                            variant: tuple.get_item(0)?.extract()?,
+                            inner: tuple.get_item(1)?,
+                        });
+                    }
+                }
+                if value.is_instance_of::<PyString>() {
+                    let variant = value.extract()?;
                     let py = self.0.py();
                     return visitor.visit_enum(EnumDeserializer {
                         variant,
