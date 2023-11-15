@@ -37,7 +37,19 @@ fn unit_from_pyobject() {
     })
 }
 
-// TODO unit struct
+// unit struct
+#[derive(Debug, PartialEq, Deserialize)]
+struct UnitStruct;
+
+#[test]
+fn unit_struct_from_pyobject() {
+    Python::with_gil(|py| {
+        let py_unit = PyTuple::empty(py);
+        let unit: UnitStruct = from_pyobject(py_unit).unwrap();
+        assert_eq!(unit, UnitStruct);
+    })
+}
+
 // TODO unit variant
 
 // newtype struct

@@ -22,7 +22,10 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
             return visitor.visit_map(MapDeserializer::new(self.0.extract()?));
         }
         if self.0.is_instance_of::<PyList>() {
-            return visitor.visit_seq(SeqDeserializer::new(self.0.extract()?));
+            return visitor.visit_seq(SeqDeserializer::from_list(self.0.extract()?));
+        }
+        if self.0.is_instance_of::<PyTuple>() {
+            return visitor.visit_seq(SeqDeserializer::from_tuple(self.0.extract()?));
         }
         if self.0.is_instance_of::<PyString>() {
             return visitor.visit_str(self.0.extract()?);
@@ -91,9 +94,21 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         }
     }
 
+    fn deserialize_unit_struct<V: de::Visitor<'de>>(
+        self,
+        _name: &'static str,
+        visitor: V,
+    ) -> Result<V::Value> {
+        if self.0.is(PyTuple::empty(self.0.py())) {
+            visitor.visit_unit()
+        } else {
+            self.deserialize_any(visitor)
+        }
+    }
+
     forward_to_deserialize_any! {
         bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
-        bytes byte_buf unit_struct seq tuple tuple_struct
+        bytes byte_buf seq tuple tuple_struct
         map enum identifier ignored_any
     }
 }
@@ -103,9 +118,17 @@ struct SeqDeserializer<'py> {
 }
 
 impl<'py> SeqDeserializer<'py> {
-    fn new(list: &'py PyList) -> Self {
+    fn from_list(list: &'py PyList) -> Self {
         let mut seq_reversed = Vec::new();
         for item in list.iter().rev() {
+            seq_reversed.push(item);
+        }
+        Self { seq_reversed }
+    }
+
+    fn from_tuple(tuple: &'py PyTuple) -> Self {
+        let mut seq_reversed = Vec::new();
+        for item in tuple.iter().rev() {
             seq_reversed.push(item);
         }
         Self { seq_reversed }
