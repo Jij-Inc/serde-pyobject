@@ -4,7 +4,7 @@ PyO3's PyAny as a serde data format
 
 ## Usage
 
-- Convert `T: Serialize` into `&'py PyAny`:
+### Serialize `T: Serialize` into `&'py PyAny`:
 
 ```rust
 use serde::Serialize;
@@ -23,13 +23,35 @@ Python::with_gil(|py| {
 });
 ```
 
+### Deserialize `&'py PyAny` into `T: Deserialize<'de>`:
+
+```rust
+use serde::Deserialize;
+use pyo3::{Python, types::{PyAny, PyDict}};
+use serde_pyobject::{from_pyobject, pydict};
+
+#[derive(Debug, PartialEq, Deserialize)]
+struct A {
+    a: u32,
+    b: String,
+}
+
+Python::with_gil(|py| {
+    let a: &PyDict = pydict! { py,
+      "a" => 1,
+      "b" => "test"
+    }
+    .unwrap();
+    let a: A = from_pyobject(a).unwrap();
+    assert_eq!(a, A { a: 1, b: "test".to_string() });
+});
+```
+
 ## Mapping between Python and [serde data model]
 
 [serde data model]: https://serde.rs/data-model.html
 
-### Serialize
-
-| [serde data model] | PyO3 type | Rust input | Python output |
+| [serde data model] | PyO3 type | Rust | Python |
 |------------------|-----------|------------|---------------|
 | `i8`, `i16`, `i32`, `i64`, `isize`, <br> `u8`, `u16`, `u32`, `u64`, `usize` | `PyLong` | `123` | `123` |
 | `f32`, `f64` | `PyFloat` | `1.0` | `1.0` |
