@@ -1,7 +1,7 @@
 use crate::error::{Error, Result};
 use pyo3::types::*;
 use serde::{
-    de::{self, MapAccess, Visitor},
+    de::{self, MapAccess, SeqAccess, Visitor},
     forward_to_deserialize_any, Deserialize,
 };
 
@@ -49,10 +49,45 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         self.deserialize_any(visitor)
     }
 
+    fn deserialize_newtype_struct<V: de::Visitor<'de>>(
+        self,
+        name: &'static str,
+        visitor: V,
+    ) -> Result<V::Value> {
+        // Dict `{ "A": 1 }` is deserialized as `A(1)`
+        if self.0.is_instance_of::<PyDict>() {
+            let dict: &PyDict = self.0.extract()?;
+            if let Some(inner) = dict.get_item(name)? {
+                return visitor.visit_seq(SeqDeserializer {
+                    seq_reversed: vec![inner],
+                });
+            }
+        }
+        // Default to `any` case
+        self.deserialize_any(visitor)
+    }
+
     forward_to_deserialize_any! {
         bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
-        bytes byte_buf option unit unit_struct newtype_struct seq tuple
-        tuple_struct map enum identifier ignored_any
+        bytes byte_buf option unit unit_struct seq tuple tuple_struct
+        map enum identifier ignored_any
+    }
+}
+
+struct SeqDeserializer<'py> {
+    seq_reversed: Vec<&'py PyAny>,
+}
+
+impl<'de, 'py> SeqAccess<'de> for SeqDeserializer<'py> {
+    type Error = Error;
+    fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
+    where
+        T: de::DeserializeSeed<'de>,
+    {
+        self.seq_reversed.pop().map_or(Ok(None), |value| {
+            let value = seed.deserialize(PyAnyDeserializer(value))?;
+            Ok(Some(value))
+        })
     }
 }
 

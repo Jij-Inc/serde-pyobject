@@ -72,3 +72,18 @@ fn struct_from_nested_pydict() {
         );
     });
 }
+
+#[derive(Debug, PartialEq, Deserialize)]
+struct NewTypeStruct(u8);
+
+#[test]
+fn newtype_struct_from_pyobject() {
+    Python::with_gil(|py| {
+        let dict = pydict! {
+            "NewTypeStruct" => 1
+        }
+        .unwrap();
+        let obj: NewTypeStruct = from_pyobject(dict.into_ref(py)).unwrap();
+        assert_eq!(obj, NewTypeStruct(1));
+    });
+}
