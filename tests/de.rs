@@ -1,4 +1,4 @@
-use pyo3::prelude::*;
+use pyo3::{prelude::*, types::*};
 use serde::Deserialize;
 use serde_pyobject::{from_pyobject, pydict};
 use std::collections::BTreeMap;
@@ -27,7 +27,16 @@ fn option_from_pyobject() {
     })
 }
 
-// TODO unit
+// unit
+#[test]
+fn unit_from_pyobject() {
+    Python::with_gil(|py| {
+        let py_unit = PyTuple::empty(py);
+        let unit: () = from_pyobject(py_unit).unwrap();
+        assert_eq!(unit, ());
+    })
+}
+
 // TODO unit struct
 // TODO unit variant
 
