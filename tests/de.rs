@@ -123,7 +123,24 @@ fn newtype_variant_from_pyobject() {
 
 // TODO seq
 // TODO tuple
-// TODO tuple struct
+
+// tuple struct
+#[derive(Debug, PartialEq, Deserialize)]
+struct T(u8, String);
+
+#[test]
+fn tuple_struct_from_pyobject() {
+    Python::with_gil(|py| {
+        let dict = pydict! {
+            py,
+            "T" => (1, "test")
+        }
+        .unwrap();
+        let obj: T = from_pyobject(dict).unwrap();
+        assert_eq!(obj, T(1, "test".to_string()));
+    });
+}
+
 // TODO tuple variant
 
 // map

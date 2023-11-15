@@ -144,9 +144,27 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         self.deserialize_any(visitor)
     }
 
+    fn deserialize_tuple_struct<V: de::Visitor<'de>>(
+        self,
+        name: &'static str,
+        _len: usize,
+        visitor: V,
+    ) -> Result<V::Value> {
+        if self.0.is_instance_of::<PyDict>() {
+            let dict: &PyDict = self.0.extract()?;
+            if let Some(value) = dict.get_item(name)? {
+                if value.is_instance_of::<PyTuple>() {
+                    let tuple: &PyTuple = value.extract()?;
+                    return visitor.visit_seq(SeqDeserializer::from_tuple(tuple));
+                }
+            }
+        }
+        self.deserialize_any(visitor)
+    }
+
     forward_to_deserialize_any! {
         bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
-        bytes byte_buf seq tuple tuple_struct
+        bytes byte_buf seq tuple
         map identifier ignored_any
     }
 }
