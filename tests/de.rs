@@ -13,7 +13,20 @@ fn i32_from_pyobject() {
     });
 }
 
-// TODO option
+// option
+#[test]
+fn option_from_pyobject() {
+    Python::with_gil(|py| {
+        let none = py.None();
+        let option: Option<i32> = from_pyobject(none.into_ref(py)).unwrap();
+        assert_eq!(option, None);
+
+        let py_int: Py<PyAny> = 42.into_py(py);
+        let i: Option<i32> = from_pyobject(py_int.into_ref(py)).unwrap();
+        assert_eq!(i, Some(42));
+    })
+}
+
 // TODO unit
 // TODO unit struct
 // TODO unit variant

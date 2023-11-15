@@ -30,6 +30,9 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         if self.0.is_instance_of::<PyLong>() {
             return visitor.visit_i64(self.0.extract()?);
         }
+        if self.0.is_none() {
+            return visitor.visit_none();
+        }
         unreachable!("Unsupported type: {}", self.0.get_type());
     }
 
@@ -72,9 +75,17 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         self.deserialize_any(visitor)
     }
 
+    fn deserialize_option<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
+        if self.0.is_none() {
+            visitor.visit_none()
+        } else {
+            visitor.visit_some(self)
+        }
+    }
+
     forward_to_deserialize_any! {
         bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
-        bytes byte_buf option unit unit_struct seq tuple tuple_struct
+        bytes byte_buf unit unit_struct seq tuple tuple_struct
         map enum identifier ignored_any
     }
 }
