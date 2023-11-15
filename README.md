@@ -51,9 +51,7 @@ Python::with_gil(|py| {
 
 [serde data model]: https://serde.rs/data-model.html
 
-### Serialize
-
-| [serde data model] | PyO3 type | Rust input | Python output |
+| [serde data model] | PyO3 type | Rust | Python |
 |------------------|-----------|------------|---------------|
 | `i8`, `i16`, `i32`, `i64`, `isize`, <br> `u8`, `u16`, `u32`, `u64`, `usize` | `PyLong` | `123` | `123` |
 | `f32`, `f64` | `PyFloat` | `1.0` | `1.0` |
