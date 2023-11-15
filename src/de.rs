@@ -1,8 +1,8 @@
 use crate::error::{Error, Result};
 use pyo3::types::*;
 use serde::{
-    de::{self, MapAccess, SeqAccess, Visitor},
-    forward_to_deserialize_any, Deserialize,
+    de::{self, value::StrDeserializer, MapAccess, SeqAccess, Visitor},
+    forward_to_deserialize_any, Deserialize, Deserializer,
 };
 
 pub fn from_pyobject<'py, 'de, T: Deserialize<'de>>(any: &'py PyAny) -> Result<T> {
@@ -106,10 +106,31 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         }
     }
 
+    fn deserialize_enum<V: de::Visitor<'de>>(
+        self,
+        name: &'static str,
+        _variants: &'static [&'static str],
+        visitor: V,
+    ) -> Result<V::Value> {
+        if self.0.is_instance_of::<PyDict>() {
+            let dict: &PyDict = self.0.extract()?;
+            if let Some(value) = dict.get_item(name)? {
+                if let Ok(variant) = value.extract() {
+                    let py = self.0.py();
+                    return visitor.visit_enum(EnumDeserializer {
+                        variant,
+                        inner: py.None().into_ref(py),
+                    });
+                }
+            }
+        }
+        self.deserialize_any(visitor)
+    }
+
     forward_to_deserialize_any! {
         bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
         bytes byte_buf seq tuple tuple_struct
-        map enum identifier ignored_any
+        map identifier ignored_any
     }
 }
 
@@ -190,5 +211,54 @@ impl<'de, 'py> MapAccess<'de> for MapDeserializer<'py> {
         } else {
             unreachable!()
         }
+    }
+}
+
+struct EnumDeserializer<'py> {
+    variant: &'py str,
+    inner: &'py PyAny,
+}
+
+impl<'de, 'py> de::EnumAccess<'de> for EnumDeserializer<'py> {
+    type Error = Error;
+    type Variant = Self;
+
+    fn variant_seed<V>(self, seed: V) -> Result<(V::Value, Self::Variant)>
+    where
+        V: de::DeserializeSeed<'de>,
+    {
+        Ok((
+            seed.deserialize(StrDeserializer::<Error>::new(self.variant))?,
+            self,
+        ))
+    }
+}
+
+impl<'de, 'py> de::VariantAccess<'de> for EnumDeserializer<'py> {
+    type Error = Error;
+
+    fn unit_variant(self) -> Result<()> {
+        Ok(())
+    }
+
+    fn newtype_variant_seed<T>(self, seed: T) -> Result<T::Value>
+    where
+        T: de::DeserializeSeed<'de>,
+    {
+        seed.deserialize(PyAnyDeserializer(self.inner))
+    }
+
+    fn tuple_variant<V>(self, _len: usize, visitor: V) -> Result<V::Value>
+    where
+        V: Visitor<'de>,
+    {
+        PyAnyDeserializer(self.inner).deserialize_seq(visitor)
+    }
+
+    fn struct_variant<V>(self, _fields: &'static [&'static str], visitor: V) -> Result<V::Value>
+    where
+        V: Visitor<'de>,
+    {
+        PyAnyDeserializer(self.inner).deserialize_map(visitor)
     }
 }

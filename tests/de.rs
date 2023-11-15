@@ -50,7 +50,24 @@ fn unit_struct_from_pyobject() {
     })
 }
 
-// TODO unit variant
+// unit variant
+#[derive(Debug, PartialEq, Deserialize)]
+enum E {
+    A,
+    B,
+}
+
+#[test]
+fn unit_variant_from_pyobject() {
+    Python::with_gil(|py| {
+        let dict = pydict! {
+            "E" => "A"
+        }
+        .unwrap();
+        let out: E = from_pyobject(dict.into_ref(py)).unwrap();
+        assert_eq!(out, E::A);
+    })
+}
 
 // newtype struct
 #[derive(Debug, PartialEq, Deserialize)]
