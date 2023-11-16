@@ -3,7 +3,11 @@ name = "serde-pyobject"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+description   = "PyO3's PyAny as a serde data format"
+documentation = "https://docs.rs/serde-pyobject/"
+repository    = "https://github.com/Jij-Inc/serde-pyobject"
+keywords      = ["serde", "pyo3", "python", "ffi"]
+license       = "MIT OR Apache-2.0"
 
 [dependencies]
 pyo3 = "0.20.0"
