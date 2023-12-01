@@ -84,8 +84,8 @@ use serde::{
 ///
 /// ```
 /// use serde::Deserialize;
-/// use pyo3::Python;
-/// use serde_pyobject::{from_pyobject, pydict};
+/// use pyo3::{Python, types::PyString};
+/// use serde_pyobject::from_pyobject;
 ///
 /// #[derive(Debug, PartialEq, Deserialize)]
 /// enum E {
@@ -94,8 +94,8 @@ use serde::{
 /// }
 ///
 /// Python::with_gil(|py| {
-///     let dict = pydict! { py, "E" => "A" }.unwrap();
-///     let out: E = from_pyobject(dict).unwrap();
+///     let any = PyString::new(py, "A");
+///     let out: E = from_pyobject(any).unwrap();
 ///     assert_eq!(out, E::A);
 /// })
 /// ```
@@ -104,15 +104,15 @@ use serde::{
 ///
 /// ```
 /// use serde::Deserialize;
-/// use pyo3::Python;
-/// use serde_pyobject::{from_pyobject, pydict};
+/// use pyo3::{Python, PyAny, IntoPy};
+/// use serde_pyobject::from_pyobject;
 ///
 /// #[derive(Debug, PartialEq, Deserialize)]
 /// struct NewTypeStruct(u8);
 ///
 /// Python::with_gil(|py| {
-///     let dict = pydict! { py, "NewTypeStruct" => 1 }.unwrap();
-///     let obj: NewTypeStruct = from_pyobject(dict).unwrap();
+///     let any: &PyAny = 1_u32.into_py(py).into_ref(py);
+///     let obj: NewTypeStruct = from_pyobject(any).unwrap();
 ///     assert_eq!(obj, NewTypeStruct(1));
 /// });
 /// ```
@@ -130,7 +130,7 @@ use serde::{
 /// }
 ///
 /// Python::with_gil(|py| {
-///     let dict = pydict! { py, "NewTypeVariant" => ("N", 41) }.unwrap();
+///     let dict = pydict! { py, "N" => 41 }.unwrap();
 ///     let obj: NewTypeVariant = from_pyobject(dict).unwrap();
 ///     assert_eq!(obj, NewTypeVariant::N(41));
 /// });
@@ -166,15 +166,15 @@ use serde::{
 ///
 /// ```
 /// use serde::Deserialize;
-/// use pyo3::Python;
-/// use serde_pyobject::{from_pyobject, pydict};
+/// use pyo3::{Python, IntoPy, types::PyTuple};
+/// use serde_pyobject::from_pyobject;
 ///
 /// #[derive(Debug, PartialEq, Deserialize)]
 /// struct T(u8, String);
 ///
 /// Python::with_gil(|py| {
-///     let dict = pydict! { py, "T" => (1, "test") }.unwrap();
-///     let obj: T = from_pyobject(dict).unwrap();
+///     let tuple = PyTuple::new(py, &[1_u32.into_py(py), "test".into_py(py)]);
+///     let obj: T = from_pyobject(tuple).unwrap();
 ///     assert_eq!(obj, T(1, "test".to_string()));
 /// });
 /// ```
@@ -192,7 +192,7 @@ use serde::{
 /// }
 ///
 /// Python::with_gil(|py| {
-///     let dict = pydict! { py, "TupleVariant" => ("T", (1, 2)) }.unwrap();
+///     let dict = pydict! { py, "T" => (1, 2) }.unwrap();
 ///     let obj: TupleVariant = from_pyobject(dict).unwrap();
 ///     assert_eq!(obj, TupleVariant::T(1, 2));
 /// });
@@ -281,11 +281,11 @@ use serde::{
 /// Python::with_gil(|py| {
 ///     let dict = pydict! {
 ///         py,
-///         "StructVariant" => ("S", pydict! {
+///         "S" => pydict! {
 ///             "r" => 1,
 ///             "g" => 2,
 ///             "b" => 3
-///         }.unwrap())
+///         }.unwrap()
 ///     }
 ///     .unwrap();
 ///     let obj: StructVariant = from_pyobject(dict).unwrap();
@@ -354,22 +354,12 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
 
     fn deserialize_newtype_struct<V: de::Visitor<'de>>(
         self,
-        name: &'static str,
+        _name: &'static str,
         visitor: V,
     ) -> Result<V::Value> {
-        // Dict `{ "A": 1 }` is deserialized as `A(1)`
-        if self.0.is_instance_of::<PyDict>() {
-            let dict: &PyDict = self.0.extract()?;
-            if let Some(inner) = dict.get_item(name)? {
-                // Visitor of `#[derive(Deserialize)] struct A(u8);` requires tuple struct,
-                // and thus use 1-element "tuple" here
-                return visitor.visit_seq(SeqDeserializer {
-                    seq_reversed: vec![inner],
-                });
-            }
-        }
-        // Default to `any` case
-        self.deserialize_any(visitor)
+        visitor.visit_seq(SeqDeserializer {
+            seq_reversed: vec![self.0],
+        })
     }
 
     fn deserialize_option<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
@@ -402,28 +392,29 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
 
     fn deserialize_enum<V: de::Visitor<'de>>(
         self,
-        name: &'static str,
+        _name: &'static str,
         _variants: &'static [&'static str],
         visitor: V,
     ) -> Result<V::Value> {
+        if self.0.is_instance_of::<PyString>() {
+            let variant = self.0.extract()?;
+            let py = self.0.py();
+            let none = py.None().into_ref(py);
+            return visitor.visit_enum(EnumDeserializer {
+                variant,
+                inner: none,
+            });
+        }
         if self.0.is_instance_of::<PyDict>() {
             let dict: &PyDict = self.0.extract()?;
-            if let Some(value) = dict.get_item(name)? {
-                if value.is_instance_of::<PyTuple>() {
-                    let tuple: &PyTuple = value.extract()?;
-                    if tuple.len() == 2 {
-                        return visitor.visit_enum(EnumDeserializer {
-                            variant: tuple.get_item(0)?.extract()?,
-                            inner: tuple.get_item(1)?,
-                        });
-                    }
-                }
-                if value.is_instance_of::<PyString>() {
-                    let variant = value.extract()?;
-                    let py = self.0.py();
+            if dict.len() == 1 {
+                let key = dict.keys().get_item(0).unwrap();
+                let value = dict.values().get_item(0).unwrap();
+                if key.is_instance_of::<PyString>() {
+                    let variant = key.extract()?;
                     return visitor.visit_enum(EnumDeserializer {
                         variant,
-                        inner: py.None().into_ref(py),
+                        inner: value,
                     });
                 }
             }
