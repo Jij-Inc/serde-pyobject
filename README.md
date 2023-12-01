@@ -1,5 +1,9 @@
 # serde-pyobject
 
+
+[![crate](https://img.shields.io/crates/v/serde-pyobject.svg)](https://crates.io/crates/serde-pyobject) 
+[![docs.rs](https://docs.rs/serde-pyobject/badge.svg)](https://docs.rs/serde-pyobject)
+
 PyO3's PyAny as a serde data format
 
 ## Usage
