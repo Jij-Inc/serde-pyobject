@@ -5,6 +5,235 @@ use pyo3::{
 };
 use serde::{ser, Serialize};
 
+/// Serialize `T: Serialize` into a [`pyo3::PyAny`] value.
+///
+/// # Examples
+///
+/// ## string
+///
+/// ```
+/// use pyo3::{Python, types::PyString};
+/// use serde_pyobject::to_pyobject;
+///
+/// Python::with_gil(|py| {
+///     // char
+///     let obj = to_pyobject(py, &'a').unwrap();
+///     assert!(obj.is_instance_of::<PyString>());
+///     // &str
+///     let obj = to_pyobject(py, "test").unwrap();
+///     assert!(obj.is_instance_of::<PyString>());
+/// });
+/// ```
+///
+/// ## integer
+///
+/// ```
+/// use pyo3::{Python, types::PyLong};
+/// use serde_pyobject::to_pyobject;
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &1_u16).unwrap();
+///     assert!(obj.is_instance_of::<PyLong>());
+///
+///     let obj = to_pyobject(py, &1_i64).unwrap();
+///     assert!(obj.is_instance_of::<PyLong>());
+///
+///     let obj = to_pyobject(py, &1_i64).unwrap();
+///     assert!(obj.is_instance_of::<PyLong>());
+/// });
+/// ```
+///
+/// ## float
+///
+/// ```
+/// use pyo3::{Python, types::PyFloat};
+/// use serde_pyobject::to_pyobject;
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &3.1_f32).unwrap();
+///     assert!(obj.is_instance_of::<PyFloat>());
+///
+///     let obj = to_pyobject(py, &-3.1_f64).unwrap();
+///     assert!(obj.is_instance_of::<PyFloat>());
+/// });
+/// ```
+///
+/// ## option
+///
+/// Rust `None` is serialized to Python `None`, and `Some(value)` is serialized as `value` is serialized
+///
+/// ```
+/// use pyo3::{Python, types::PyLong};
+/// use serde_pyobject::to_pyobject;
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &Option::<i32>::None).unwrap();
+///     assert!(obj.is(&py.None()));
+///
+///     let obj = to_pyobject(py, &Some(1_i64)).unwrap();
+///     assert!(obj.is_instance_of::<PyLong>());
+/// });
+/// ```
+///
+/// ## unit
+///
+/// Rust's `()` is serialized to Python's `()`
+///
+/// ```
+/// use pyo3::{Python, types::PyTuple};
+/// use serde_pyobject::to_pyobject;
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &()).unwrap();
+///     assert!(obj.is(PyTuple::empty(py)));
+/// });
+/// ```
+///
+/// ## unit_struct
+///
+/// `Unit` is serialized as an empty tuple `()`
+///
+/// ```
+/// use serde::Serialize;
+/// use pyo3::{Python, types::PyTuple};
+/// use serde_pyobject::{to_pyobject, pydict};
+///
+/// #[derive(Serialize)]
+/// struct UnitStruct;
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &UnitStruct {}).unwrap();
+///     assert!(obj.eq(pydict! { "UnitStruct" => PyTuple::empty(py) }.unwrap()).unwrap());
+/// });
+/// ```
+///
+/// ## unit_variant
+///
+/// ```
+/// use serde::Serialize;
+/// use pyo3::{Python, types::PyTuple};
+/// use serde_pyobject::{to_pyobject, pydict};
+///
+/// #[derive(Serialize)]
+/// enum UnitVariant {
+///     A,
+///     B,
+/// }
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &UnitVariant::A).unwrap();
+///     assert!(obj.eq(pydict! { "UnitVariant" => "A" }.unwrap()).unwrap());
+///     let obj = to_pyobject(py, &UnitVariant::B).unwrap();
+///     assert!(obj.eq(pydict! { "UnitVariant" => "B" }.unwrap()).unwrap());
+/// });
+/// ```
+///
+/// ## newtype_struct
+///
+/// TODO
+///
+/// ## newtype_variant
+///
+/// ```
+/// use serde::Serialize;
+/// use pyo3::Python;
+/// use serde_pyobject::{to_pyobject, pydict};
+///
+/// #[derive(Serialize)]
+/// enum NewtypeVariant {
+///     N(u8),
+/// }
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &NewtypeVariant::N(3)).unwrap();
+///     assert!(obj
+///         .eq(pydict! { "NewtypeVariant" => ("N", 3) }.unwrap())
+///         .unwrap());
+/// });
+/// ```
+///
+/// ## seq
+///
+/// ```
+/// use pyo3::{Python, types::PyList};
+/// use serde_pyobject::to_pyobject;
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &vec![1, 2, 3]).unwrap();
+///     assert!(obj.eq(PyList::new(py, [1, 2, 3])).unwrap());
+/// });
+/// ```
+///
+/// ## tuple
+///
+/// ```
+/// use pyo3::{IntoPy, Python, types::PyTuple};
+/// use serde_pyobject::to_pyobject;
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &(3, "test")).unwrap();
+///     assert!(obj
+///         .eq(PyTuple::new(py, [3.into_py(py), "test".into_py(py)]))
+///         .unwrap());
+/// });
+/// ```
+///
+/// ## tuple struct
+/// TODO
+///
+/// ## tuple variant
+/// TODO
+///
+/// ## map
+/// TODO
+///
+/// ## struct
+///
+/// Struct `A { a: 32, b: "test".to_string() }` is serialized as a dict of dict
+///
+/// ```json
+/// {
+///   "A": {
+///      "a": 32,
+///      "b": "test"
+///   }
+/// }
+/// ```
+///
+/// ```
+/// use serde::Serialize;
+/// use pyo3::{IntoPy, Python, types::PyTuple};
+/// use serde_pyobject::{to_pyobject, pydict};
+///
+/// #[derive(Serialize)]
+/// struct Struct {
+///     a: i32,
+///     b: String,
+/// }
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(
+///         py,
+///         &Struct {
+///             a: 32,
+///             b: "test".to_string(),
+///         },
+///     )
+///     .unwrap();
+///     assert!(obj
+///         .eq(pydict! {
+///             "Struct" => pydict!{
+///                 "a" => 32,
+///                 "b" => "test"
+///             }.unwrap()
+///         }
+///         .unwrap())
+///         .unwrap());
+/// });
+/// ```
+///
+/// ## struct variant
+/// TODO
 pub fn to_pyobject<'py, T>(py: Python<'py>, value: &T) -> Result<&'py PyAny>
 where
     T: Serialize + ?Sized,
