@@ -17,6 +17,7 @@ fn primitive() {
     check_revertible(-4_i32);
     check_revertible(-3.1);
     check_revertible(true);
+    check_revertible("test".to_string());
 }
 
 #[test]
@@ -75,7 +76,7 @@ fn seq() {
 
 #[test]
 fn tuple() {
-    check_revertible((1, "test"));
+    check_revertible((1, "test".to_string()));
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

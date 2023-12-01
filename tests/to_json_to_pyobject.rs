@@ -25,6 +25,12 @@ fn primitive() {
 }
 
 #[test]
+fn string() {
+    test("test");
+    test("test".to_string());
+}
+
+#[test]
 fn option() {
     test(Some(10_u8));
     test(None::<u8>);
