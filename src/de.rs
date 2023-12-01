@@ -139,11 +139,11 @@ use serde::{
 /// ## seq
 ///
 /// ```
-/// use pyo3::{Python, types::PyList};
-/// use serde_pyobject::from_pyobject;
+/// use pyo3::Python;
+/// use serde_pyobject::{from_pyobject, pylist};
 ///
 /// Python::with_gil(|py| {
-///     let list = PyList::new(py, &[1, 2, 3]);
+///     let list = pylist![py; 1, 2, 3].unwrap();
 ///     let seq: Vec<i32> = from_pyobject(list).unwrap();
 ///     assert_eq!(seq, vec![1, 2, 3]);
 /// });
