@@ -155,12 +155,12 @@ use serde::{ser, Serialize};
 /// ## seq
 ///
 /// ```
-/// use pyo3::{Python, types::PyList};
-/// use serde_pyobject::to_pyobject;
+/// use pyo3::Python;
+/// use serde_pyobject::{to_pyobject, pylist};
 ///
 /// Python::with_gil(|py| {
 ///     let obj = to_pyobject(py, &vec![1, 2, 3]).unwrap();
-///     assert!(obj.eq(PyList::new(py, [1, 2, 3])).unwrap());
+///     assert!(obj.eq(pylist![py; 1, 2, 3].unwrap()).unwrap());
 /// });
 /// ```
 ///
