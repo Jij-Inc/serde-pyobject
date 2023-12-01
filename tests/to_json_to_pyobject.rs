@@ -98,12 +98,12 @@ struct TupleStruct(u8, u8, u8);
 // - to_pyobject = `(1, 2, 3)`
 // - to_json_to_pyobject = `[1, 2, 3]`
 
-#[derive(Serialize)]
-enum TupleVariant {
-    T(u8, u8),
-}
-
 // Skip tuple_variant
+//
+// #[derive(Serialize)]
+// enum TupleVariant {
+//     T(u8, u8),
+// }
 //
 // Input: `TupleVariant::T(1, 2)`
 // Output:

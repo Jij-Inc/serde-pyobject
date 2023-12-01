@@ -222,7 +222,25 @@ use serde::{ser, Serialize};
 /// ```
 ///
 /// ## map
-/// TODO
+///
+/// ```
+/// use pyo3::Python;
+/// use serde_pyobject::{to_pyobject, pydict};
+/// use maplit::hashmap;
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &hashmap! {
+///         "a".to_owned() => 1_u8,
+///         "b".to_owned() => 2,
+///         "c".to_owned() => 3
+///     }).unwrap();
+///     assert!(obj.eq(pydict! {
+///         "a" => 1,
+///         "b" => 2,
+///         "c" => 3
+///     }.unwrap()).unwrap());
+/// });
+/// ```
 ///
 /// ## struct
 ///
