@@ -1,6 +1,6 @@
 use pyo3::{
     prelude::*,
-    types::{PyDict, PyFloat, PyList, PyLong, PyString, PyTuple},
+    types::{PyFloat, PyList, PyLong, PyString, PyTuple},
 };
 use serde::Serialize;
 
@@ -71,16 +71,11 @@ struct UnitStruct;
 fn serialize_unit_struct() {
     Python::with_gil(|py| {
         let obj = to_pyobject(py, &UnitStruct {}).unwrap();
-        assert!(obj.is_instance_of::<PyDict>());
-        let value = obj
-            .downcast::<PyDict>()
-            .unwrap()
-            .get_item("UnitStruct")
-            .unwrap()
-            .unwrap()
-            .extract::<&PyTuple>()
-            .unwrap();
-        assert!(value.is(PyTuple::empty(py)));
+        let dict = pydict! {
+            "UnitStruct" => PyTuple::empty(py)
+        }
+        .unwrap();
+        assert!(obj.eq(dict).unwrap());
     });
 }
 
@@ -95,28 +90,10 @@ enum UnitVariant {
 fn serialize_unit_variant() {
     Python::with_gil(|py| {
         let obj = to_pyobject(py, &UnitVariant::A).unwrap();
-        assert!(obj.is_instance_of::<PyDict>());
-        let tag = obj
-            .downcast::<PyDict>()
-            .unwrap()
-            .get_item("UnitVariant")
-            .unwrap()
-            .unwrap()
-            .extract::<&str>()
-            .unwrap();
-        assert_eq!(tag, "A");
+        assert!(obj.eq(pydict! { "UnitVariant" => "A" }.unwrap()).unwrap());
 
         let obj = to_pyobject(py, &UnitVariant::B).unwrap();
-        assert!(obj.is_instance_of::<PyDict>());
-        let tag = obj
-            .downcast::<PyDict>()
-            .unwrap()
-            .get_item("UnitVariant")
-            .unwrap()
-            .unwrap()
-            .extract::<&str>()
-            .unwrap();
-        assert_eq!(tag, "B");
+        assert!(obj.eq(pydict! { "UnitVariant" => "B" }.unwrap()).unwrap());
     });
 }
 
@@ -131,17 +108,9 @@ enum NewtypeVariant {
 fn serialize_newtype_variant() {
     Python::with_gil(|py| {
         let obj = to_pyobject(py, &NewtypeVariant::N(3)).unwrap();
-        assert!(obj.is_instance_of::<PyDict>());
-        let (tag, value) = obj
-            .downcast::<PyDict>()
-            .unwrap()
-            .get_item("NewtypeVariant")
-            .unwrap()
-            .unwrap()
-            .extract::<(&str, u8)>()
-            .unwrap();
-        assert_eq!(tag, "N");
-        assert_eq!(value, 3);
+        assert!(obj
+            .eq(pydict! { "NewtypeVariant" => ("N", 3) }.unwrap())
+            .unwrap());
     });
 }
 
@@ -149,11 +118,7 @@ fn serialize_newtype_variant() {
 fn serialize_seq() {
     Python::with_gil(|py| {
         let obj = to_pyobject(py, &vec![1, 2, 3]).unwrap();
-        assert!(obj.is_instance_of::<PyList>());
-        let value = obj.downcast::<PyList>().unwrap();
-        assert_eq!(value.get_item(0).unwrap().extract::<i32>().unwrap(), 1);
-        assert_eq!(value.get_item(1).unwrap().extract::<i32>().unwrap(), 2);
-        assert_eq!(value.get_item(2).unwrap().extract::<i32>().unwrap(), 3);
+        assert!(obj.eq(PyList::new(py, [1, 2, 3])).unwrap());
     });
 }
 
@@ -161,13 +126,9 @@ fn serialize_seq() {
 fn serialize_tuple() {
     Python::with_gil(|py| {
         let obj = to_pyobject(py, &(3, "test")).unwrap();
-        assert!(obj.is_instance_of::<PyTuple>());
-        let value = obj.downcast::<PyTuple>().unwrap();
-        assert_eq!(value.get_item(0).unwrap().extract::<i32>().unwrap(), 3);
-        assert_eq!(
-            value.get_item(1).unwrap().extract::<&str>().unwrap(),
-            "test"
-        );
+        assert!(obj
+            .eq(PyTuple::new(py, [3.into_py(py), "test".into_py(py)]))
+            .unwrap());
     });
 }
 
@@ -204,7 +165,15 @@ fn serialize_struct() {
             },
         )
         .unwrap();
-        assert!(obj.is_instance_of::<PyDict>());
+        assert!(obj
+            .eq(pydict! {
+                "Struct" => pydict!{
+                    "a" => 32,
+                    "b" => "test"
+                }.unwrap()
+            }
+            .unwrap())
+            .unwrap());
     });
 }
 
