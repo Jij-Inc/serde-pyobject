@@ -189,14 +189,12 @@ use serde::{ser, Serialize};
 ///
 /// ## struct
 ///
-/// Struct `A { a: 32, b: "test".to_string() }` is serialized as a dict of dict
+/// Struct `A { a: 32, b: "test".to_string() }` is serialized as a dict
 ///
 /// ```json
 /// {
-///   "A": {
-///      "a": 32,
-///      "b": "test"
-///   }
+///    "a": 32,
+///    "b": "test"
 /// }
 /// ```
 ///
@@ -212,23 +210,8 @@ use serde::{ser, Serialize};
 /// }
 ///
 /// Python::with_gil(|py| {
-///     let obj = to_pyobject(
-///         py,
-///         &Struct {
-///             a: 32,
-///             b: "test".to_string(),
-///         },
-///     )
-///     .unwrap();
-///     assert!(obj
-///         .eq(pydict! {
-///             "Struct" => pydict!{
-///                 "a" => 32,
-///                 "b" => "test"
-///             }.unwrap()
-///         }
-///         .unwrap())
-///         .unwrap());
+///     let obj = to_pyobject(py, &Struct { a: 32, b: "test".to_string() }).unwrap();
+///     assert!(obj.eq(pydict!{ "a" => 32, "b" => "test" }.unwrap()).unwrap());
 /// });
 /// ```
 ///
@@ -407,10 +390,9 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
         })
     }
 
-    fn serialize_struct(self, name: &'static str, _len: usize) -> Result<Self::SerializeStruct> {
+    fn serialize_struct(self, _name: &'static str, _len: usize) -> Result<Self::SerializeStruct> {
         Ok(Struct {
             py: self.py,
-            name,
             fields: PyDict::new(self.py),
         })
     }
@@ -565,7 +547,6 @@ impl<'py> ser::SerializeMap for Map<'py> {
 
 pub struct Struct<'py> {
     py: Python<'py>,
-    name: &'static str,
     fields: &'py PyDict,
 }
 
@@ -583,9 +564,7 @@ impl<'py> ser::SerializeStruct for Struct<'py> {
     }
 
     fn end(self) -> Result<Self::Ok> {
-        let dict = PyDict::new(self.py);
-        dict.set_item(self.name, self.fields)?;
-        Ok(dict)
+        Ok(self.fields)
     }
 }
 
