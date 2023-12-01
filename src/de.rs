@@ -392,28 +392,29 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
 
     fn deserialize_enum<V: de::Visitor<'de>>(
         self,
-        name: &'static str,
+        _name: &'static str,
         _variants: &'static [&'static str],
         visitor: V,
     ) -> Result<V::Value> {
+        if self.0.is_instance_of::<PyString>() {
+            let variant = self.0.extract()?;
+            let py = self.0.py();
+            let none = py.None().into_ref(py);
+            return visitor.visit_enum(EnumDeserializer {
+                variant,
+                inner: none,
+            });
+        }
         if self.0.is_instance_of::<PyDict>() {
             let dict: &PyDict = self.0.extract()?;
-            if let Some(value) = dict.get_item(name)? {
-                if value.is_instance_of::<PyTuple>() {
-                    let tuple: &PyTuple = value.extract()?;
-                    if tuple.len() == 2 {
-                        return visitor.visit_enum(EnumDeserializer {
-                            variant: tuple.get_item(0)?.extract()?,
-                            inner: tuple.get_item(1)?,
-                        });
-                    }
-                }
-                if value.is_instance_of::<PyString>() {
-                    let variant = value.extract()?;
-                    let py = self.0.py();
+            if dict.len() == 1 {
+                let key = dict.keys().get_item(0).unwrap();
+                let value = dict.values().get_item(0).unwrap();
+                if key.is_instance_of::<PyString>() {
+                    let variant = key.extract()?;
                     return visitor.visit_enum(EnumDeserializer {
                         variant,
-                        inner: py.None().into_ref(py),
+                        inner: value,
                     });
                 }
             }
