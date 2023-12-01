@@ -1,3 +1,4 @@
+use maplit::*;
 use pyo3::prelude::*;
 use serde::Serialize;
 
@@ -55,6 +56,14 @@ fn unit_variant() {
 }
 
 #[derive(Serialize)]
+struct NewtypeStruct(u8);
+
+#[test]
+fn newtype_struct() {
+    test(NewtypeStruct(10));
+}
+
+#[derive(Serialize)]
 enum NewtypeVariant {
     N(u8),
 }
@@ -62,6 +71,43 @@ enum NewtypeVariant {
 #[test]
 fn newtype_variant() {
     test(NewtypeVariant::N(10));
+}
+
+#[test]
+fn seq() {
+    test(vec![1_u8, 2, 3]);
+}
+
+#[test]
+fn tuple() {
+    test((1, "test"));
+}
+
+#[derive(Serialize)]
+struct TupleStruct(u8, u8, u8);
+
+#[test]
+fn tuple_struct() {
+    test(TupleStruct(1, 2, 3));
+}
+
+#[derive(Serialize)]
+enum TupleVariant {
+    T(u8, u8),
+}
+
+#[test]
+fn tuple_variant() {
+    test(TupleVariant::T(1, 2));
+}
+
+#[test]
+fn map() {
+    test(hashmap! {
+        "a".to_owned() => 1_u8,
+        "b".to_owned() => 2,
+        "c".to_owned() => 3,
+    });
 }
 
 #[derive(Serialize)]
@@ -75,5 +121,19 @@ fn struct_() {
     test(A {
         a: 10,
         b: "hello".to_owned(),
+    });
+}
+
+#[derive(Serialize)]
+enum StructVariant {
+    S { r: u8, g: u8, b: u8 },
+}
+
+#[test]
+fn struct_variant() {
+    test(StructVariant::S {
+        r: 10,
+        g: 20,
+        b: 30,
     });
 }
