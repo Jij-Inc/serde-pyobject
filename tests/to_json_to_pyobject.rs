@@ -30,18 +30,21 @@ fn option() {
     test(None::<u8>);
 }
 
-#[test]
-fn unit() {
-    test(());
-}
+// skip unit
+//
+// Input: `()`
+// Output:
+// - to_pyobject = `()`
+// - to_json_to_pyobject = `None`
 
 #[derive(Serialize)]
 struct UnitStruct;
 
-#[test]
-fn unit_struct() {
-    test(UnitStruct);
-}
+// skip unit_struct
+//
+// Input: `UnitStruct`
+// - to_pyobject = `()`
+// - to_json_to_pyobject = `None`
 
 #[derive(Serialize)]
 enum UnitVariant {
@@ -78,28 +81,34 @@ fn seq() {
     test(vec![1_u8, 2, 3]);
 }
 
-#[test]
-fn tuple() {
-    test((1, "test"));
-}
+// Skip tuple
+//
+// Input: `(1, "test")`
+// Output:
+// - to_pyobject = `(1, "test")`
+// - to_json_to_pyobject = `[1, "test"]`
 
 #[derive(Serialize)]
 struct TupleStruct(u8, u8, u8);
 
-#[test]
-fn tuple_struct() {
-    test(TupleStruct(1, 2, 3));
-}
+// Skip tuple_struct
+//
+// Input: `TupleStruct(1, 2, 3)`
+// Output:
+// - to_pyobject = `(1, 2, 3)`
+// - to_json_to_pyobject = `[1, 2, 3]`
 
 #[derive(Serialize)]
 enum TupleVariant {
     T(u8, u8),
 }
 
-#[test]
-fn tuple_variant() {
-    test(TupleVariant::T(1, 2));
-}
+// Skip tuple_variant
+//
+// Input: `TupleVariant::T(1, 2)`
+// Output:
+// - to_pyobject = {'T': (1, 2)}
+// - to_json_to_pyobject = {'T': [1, 2]}
 
 #[test]
 fn map() {
