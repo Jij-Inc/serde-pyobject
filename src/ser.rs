@@ -300,35 +300,29 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
         Ok(PyTuple::empty(self.py))
     }
 
-    fn serialize_unit_struct(self, name: &'static str) -> Result<Self::Ok> {
-        let dict = PyDict::new(self.py);
-        dict.set_item(name, PyTuple::empty(self.py))?;
-        Ok(dict)
+    fn serialize_unit_struct(self, _name: &'static str) -> Result<Self::Ok> {
+        Ok(PyTuple::empty(self.py))
     }
 
     fn serialize_unit_variant(
         self,
-        name: &'static str,
+        _name: &'static str,
         _index: u32,
         variant: &'static str,
     ) -> Result<Self::Ok> {
-        let dict = PyDict::new(self.py);
-        dict.set_item(name, variant)?;
-        Ok(dict)
+        Ok(PyString::new(self.py, variant))
     }
 
-    fn serialize_newtype_struct<T>(self, name: &'static str, value: &T) -> Result<Self::Ok>
+    fn serialize_newtype_struct<T>(self, _name: &'static str, value: &T) -> Result<Self::Ok>
     where
         T: ?Sized + Serialize,
     {
-        let dict = PyDict::new(self.py);
-        dict.set_item(name, value.serialize(self)?)?;
-        Ok(dict)
+        value.serialize(self)
     }
 
     fn serialize_newtype_variant<T>(
         self,
-        name: &'static str,
+        _name: &'static str,
         _variant_index: u32,
         variant: &'static str,
         value: &T,
@@ -337,7 +331,7 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
         T: ?Sized + Serialize,
     {
         let dict = PyDict::new(self.py);
-        dict.set_item(name, (variant, value.serialize(self)?))?;
+        dict.set_item(variant, value.serialize(self)?)?;
         Ok(dict)
     }
 
@@ -357,26 +351,24 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
 
     fn serialize_tuple_struct(
         self,
-        name: &'static str,
+        _name: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeTupleStruct> {
         Ok(TupleStruct {
             py: self.py,
-            name,
             fields: Vec::new(),
         })
     }
 
     fn serialize_tuple_variant(
         self,
-        name: &'static str,
+        _name: &'static str,
         _variant_index: u32,
         variant: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeTupleVariant> {
         Ok(TupleVariant {
             py: self.py,
-            name,
             variant,
             fields: Vec::new(),
         })
@@ -399,14 +391,13 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
 
     fn serialize_struct_variant(
         self,
-        name: &'static str,
+        _name: &'static str,
         _variant_index: u32,
         variant: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeStructVariant> {
         Ok(StructVariant {
             py: self.py,
-            name,
             variant,
             fields: PyDict::new(self.py),
         })
@@ -456,7 +447,6 @@ impl<'py> ser::SerializeTuple for Seq<'py> {
 
 pub struct TupleStruct<'py> {
     py: Python<'py>,
-    name: &'static str,
     fields: Vec<&'py PyAny>,
 }
 
@@ -474,16 +464,12 @@ impl<'py> ser::SerializeTupleStruct for TupleStruct<'py> {
     }
 
     fn end(self) -> Result<Self::Ok> {
-        let inner = PyList::new(self.py, self.fields);
-        let dict = PyDict::new(self.py);
-        dict.set_item(self.name, inner)?;
-        Ok(dict)
+        Ok(PyTuple::new(self.py, self.fields))
     }
 }
 
 pub struct TupleVariant<'py> {
     py: Python<'py>,
-    name: &'static str,
     variant: &'static str,
     fields: Vec<&'py PyAny>,
 }
@@ -502,9 +488,8 @@ impl<'py> ser::SerializeTupleVariant for TupleVariant<'py> {
     }
 
     fn end(self) -> Result<Self::Ok> {
-        let inner = PyTuple::new(self.py, self.fields);
         let dict = PyDict::new(self.py);
-        dict.set_item(self.name, (self.variant, inner))?;
+        dict.set_item(self.variant, PyTuple::new(self.py, self.fields))?;
         Ok(dict)
     }
 }
@@ -570,7 +555,6 @@ impl<'py> ser::SerializeStruct for Struct<'py> {
 
 pub struct StructVariant<'py> {
     py: Python<'py>,
-    name: &'static str,
     variant: &'static str,
     fields: &'py PyDict,
 }
@@ -590,7 +574,7 @@ impl<'py> ser::SerializeStructVariant for StructVariant<'py> {
 
     fn end(self) -> Result<Self::Ok> {
         let dict = PyDict::new(self.py);
-        dict.set_item(self.name, (self.variant, self.fields))?;
+        dict.set_item(self.variant, self.fields)?;
         Ok(dict)
     }
 }
