@@ -18,10 +18,10 @@ use serde::{ser, Serialize};
 /// Python::with_gil(|py| {
 ///     // char
 ///     let obj = to_pyobject(py, &'a').unwrap();
-///     assert!(obj.is_instance_of::<PyString>());
+///     assert!(obj.is_exact_instance_of::<PyString>());
 ///     // &str
 ///     let obj = to_pyobject(py, "test").unwrap();
-///     assert!(obj.is_instance_of::<PyString>());
+///     assert!(obj.is_exact_instance_of::<PyString>());
 /// });
 /// ```
 ///
@@ -33,13 +33,13 @@ use serde::{ser, Serialize};
 ///
 /// Python::with_gil(|py| {
 ///     let obj = to_pyobject(py, &1_u16).unwrap();
-///     assert!(obj.is_instance_of::<PyLong>());
+///     assert!(obj.is_exact_instance_of::<PyLong>());
 ///
 ///     let obj = to_pyobject(py, &1_i64).unwrap();
-///     assert!(obj.is_instance_of::<PyLong>());
+///     assert!(obj.is_exact_instance_of::<PyLong>());
 ///
 ///     let obj = to_pyobject(py, &1_i64).unwrap();
-///     assert!(obj.is_instance_of::<PyLong>());
+///     assert!(obj.is_exact_instance_of::<PyLong>());
 /// });
 /// ```
 ///
@@ -51,10 +51,10 @@ use serde::{ser, Serialize};
 ///
 /// Python::with_gil(|py| {
 ///     let obj = to_pyobject(py, &3.1_f32).unwrap();
-///     assert!(obj.is_instance_of::<PyFloat>());
+///     assert!(obj.is_exact_instance_of::<PyFloat>());
 ///
 ///     let obj = to_pyobject(py, &-3.1_f64).unwrap();
-///     assert!(obj.is_instance_of::<PyFloat>());
+///     assert!(obj.is_exact_instance_of::<PyFloat>());
 /// });
 /// ```
 ///
@@ -71,7 +71,7 @@ use serde::{ser, Serialize};
 ///     assert!(obj.is(&py.None()));
 ///
 ///     let obj = to_pyobject(py, &Some(1_i64)).unwrap();
-///     assert!(obj.is_instance_of::<PyLong>());
+///     assert!(obj.is_exact_instance_of::<PyLong>());
 /// });
 /// ```
 ///
@@ -103,7 +103,7 @@ use serde::{ser, Serialize};
 ///
 /// Python::with_gil(|py| {
 ///     let obj = to_pyobject(py, &UnitStruct {}).unwrap();
-///     assert!(obj.eq(pydict! { "UnitStruct" => PyTuple::empty(py) }.unwrap()).unwrap());
+///     assert!(obj.eq(PyTuple::empty(py)).unwrap());
 /// });
 /// ```
 ///
@@ -122,15 +122,28 @@ use serde::{ser, Serialize};
 ///
 /// Python::with_gil(|py| {
 ///     let obj = to_pyobject(py, &UnitVariant::A).unwrap();
-///     assert!(obj.eq(pydict! { "UnitVariant" => "A" }.unwrap()).unwrap());
+///     assert!(obj.eq("A").unwrap());
 ///     let obj = to_pyobject(py, &UnitVariant::B).unwrap();
-///     assert!(obj.eq(pydict! { "UnitVariant" => "B" }.unwrap()).unwrap());
+///     assert!(obj.eq("B").unwrap());
 /// });
 /// ```
 ///
 /// ## newtype_struct
 ///
-/// TODO
+/// ```
+/// use serde::Serialize;
+/// use pyo3::{Python, types::PyLong};
+/// use serde_pyobject::to_pyobject;
+///
+/// #[derive(Serialize)]
+/// struct NewtypeStruct(u8);
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &NewtypeStruct(10)).unwrap();
+///     assert!(obj.is_exact_instance_of::<PyLong>());
+///     assert!(obj.eq(10).unwrap());
+/// });
+/// ```
 ///
 /// ## newtype_variant
 ///
@@ -146,9 +159,7 @@ use serde::{ser, Serialize};
 ///
 /// Python::with_gil(|py| {
 ///     let obj = to_pyobject(py, &NewtypeVariant::N(3)).unwrap();
-///     assert!(obj
-///         .eq(pydict! { "NewtypeVariant" => ("N", 3) }.unwrap())
-///         .unwrap());
+///     assert!(obj.eq(pydict! { "N" => 3 }.unwrap()).unwrap());
 /// });
 /// ```
 ///
@@ -172,33 +183,66 @@ use serde::{ser, Serialize};
 ///
 /// Python::with_gil(|py| {
 ///     let obj = to_pyobject(py, &(3, "test")).unwrap();
-///     assert!(obj
-///         .eq(PyTuple::new(py, [3.into_py(py), "test".into_py(py)]))
-///         .unwrap());
+///     assert!(obj.eq(PyTuple::new(py, [3.into_py(py), "test".into_py(py)])).unwrap());
 /// });
 /// ```
 ///
 /// ## tuple struct
-/// TODO
+///
+/// ```
+/// use pyo3::{Python, types::PyTuple};
+/// use serde::Serialize;
+/// use serde_pyobject::to_pyobject;
+///
+/// #[derive(Serialize)]
+/// struct TupleStruct(u8, u8, u8);
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &TupleStruct(1, 2, 3)).unwrap();
+///     assert!(obj.eq(PyTuple::new(py, [1, 2, 3])).unwrap());
+/// });
+/// ```
 ///
 /// ## tuple variant
-/// TODO
+///
+/// ```
+/// use pyo3::Python;
+/// use serde::Serialize;
+/// use serde_pyobject::{to_pyobject, pydict};
+///
+/// #[derive(Serialize)]
+/// enum TupleVariant {
+///     T(u8, u8),
+/// }
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &TupleVariant::T(1, 2)).unwrap();
+///     assert!(obj.eq(pydict!{ "T" => (1, 2) }.unwrap()).unwrap());
+/// });
+/// ```
 ///
 /// ## map
-/// TODO
+///
+/// ```
+/// use pyo3::Python;
+/// use serde_pyobject::{to_pyobject, pydict};
+/// use maplit::hashmap;
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &hashmap! {
+///         "a".to_owned() => 1_u8,
+///         "b".to_owned() => 2,
+///         "c".to_owned() => 3
+///     }).unwrap();
+///     assert!(obj.eq(pydict! {
+///         "a" => 1,
+///         "b" => 2,
+///         "c" => 3
+///     }.unwrap()).unwrap());
+/// });
+/// ```
 ///
 /// ## struct
-///
-/// Struct `A { a: 32, b: "test".to_string() }` is serialized as a dict of dict
-///
-/// ```json
-/// {
-///   "A": {
-///      "a": 32,
-///      "b": "test"
-///   }
-/// }
-/// ```
 ///
 /// ```
 /// use serde::Serialize;
@@ -212,28 +256,38 @@ use serde::{ser, Serialize};
 /// }
 ///
 /// Python::with_gil(|py| {
-///     let obj = to_pyobject(
-///         py,
-///         &Struct {
-///             a: 32,
-///             b: "test".to_string(),
-///         },
-///     )
-///     .unwrap();
-///     assert!(obj
-///         .eq(pydict! {
-///             "Struct" => pydict!{
-///                 "a" => 32,
-///                 "b" => "test"
-///             }.unwrap()
-///         }
-///         .unwrap())
-///         .unwrap());
+///     let obj = to_pyobject(py, &Struct { a: 32, b: "test".to_string() }).unwrap();
+///     assert!(obj.eq(pydict!{ "a" => 32, "b" => "test" }.unwrap()).unwrap());
 /// });
 /// ```
 ///
 /// ## struct variant
-/// TODO
+///
+/// ```
+/// use serde::Serialize;
+/// use pyo3::Python;
+/// use serde_pyobject::{to_pyobject, pydict};
+///
+/// #[derive(Serialize)]
+/// enum StructVariant {
+///     S { r: u8, g: u8, b: u8 },
+/// }
+///
+/// Python::with_gil(|py| {
+///     let obj = to_pyobject(py, &StructVariant::S { r: 1, g: 2, b: 3 }).unwrap();
+///     assert!(
+///         obj.eq(
+///             pydict! {
+///                 "S" => pydict! {
+///                     "r" => 1,
+///                     "g" => 2,
+///                     "b" => 3
+///                 }.unwrap()
+///             }.unwrap()
+///         ).unwrap()
+///     );
+/// });
+/// ```
 pub fn to_pyobject<'py, T>(py: Python<'py>, value: &T) -> Result<&'py PyAny>
 where
     T: Serialize + ?Sized,
@@ -317,35 +371,29 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
         Ok(PyTuple::empty(self.py))
     }
 
-    fn serialize_unit_struct(self, name: &'static str) -> Result<Self::Ok> {
-        let dict = PyDict::new(self.py);
-        dict.set_item(name, PyTuple::empty(self.py))?;
-        Ok(dict)
+    fn serialize_unit_struct(self, _name: &'static str) -> Result<Self::Ok> {
+        Ok(PyTuple::empty(self.py))
     }
 
     fn serialize_unit_variant(
         self,
-        name: &'static str,
+        _name: &'static str,
         _index: u32,
         variant: &'static str,
     ) -> Result<Self::Ok> {
-        let dict = PyDict::new(self.py);
-        dict.set_item(name, variant)?;
-        Ok(dict)
+        Ok(PyString::new(self.py, variant))
     }
 
-    fn serialize_newtype_struct<T>(self, name: &'static str, value: &T) -> Result<Self::Ok>
+    fn serialize_newtype_struct<T>(self, _name: &'static str, value: &T) -> Result<Self::Ok>
     where
         T: ?Sized + Serialize,
     {
-        let dict = PyDict::new(self.py);
-        dict.set_item(name, value.serialize(self)?)?;
-        Ok(dict)
+        value.serialize(self)
     }
 
     fn serialize_newtype_variant<T>(
         self,
-        name: &'static str,
+        _name: &'static str,
         _variant_index: u32,
         variant: &'static str,
         value: &T,
@@ -354,7 +402,7 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
         T: ?Sized + Serialize,
     {
         let dict = PyDict::new(self.py);
-        dict.set_item(name, (variant, value.serialize(self)?))?;
+        dict.set_item(variant, value.serialize(self)?)?;
         Ok(dict)
     }
 
@@ -374,26 +422,24 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
 
     fn serialize_tuple_struct(
         self,
-        name: &'static str,
+        _name: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeTupleStruct> {
         Ok(TupleStruct {
             py: self.py,
-            name,
             fields: Vec::new(),
         })
     }
 
     fn serialize_tuple_variant(
         self,
-        name: &'static str,
+        _name: &'static str,
         _variant_index: u32,
         variant: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeTupleVariant> {
         Ok(TupleVariant {
             py: self.py,
-            name,
             variant,
             fields: Vec::new(),
         })
@@ -407,24 +453,22 @@ impl<'py> ser::Serializer for PyAnySerializer<'py> {
         })
     }
 
-    fn serialize_struct(self, name: &'static str, _len: usize) -> Result<Self::SerializeStruct> {
+    fn serialize_struct(self, _name: &'static str, _len: usize) -> Result<Self::SerializeStruct> {
         Ok(Struct {
             py: self.py,
-            name,
             fields: PyDict::new(self.py),
         })
     }
 
     fn serialize_struct_variant(
         self,
-        name: &'static str,
+        _name: &'static str,
         _variant_index: u32,
         variant: &'static str,
         _len: usize,
     ) -> Result<Self::SerializeStructVariant> {
         Ok(StructVariant {
             py: self.py,
-            name,
             variant,
             fields: PyDict::new(self.py),
         })
@@ -474,7 +518,6 @@ impl<'py> ser::SerializeTuple for Seq<'py> {
 
 pub struct TupleStruct<'py> {
     py: Python<'py>,
-    name: &'static str,
     fields: Vec<&'py PyAny>,
 }
 
@@ -492,16 +535,12 @@ impl<'py> ser::SerializeTupleStruct for TupleStruct<'py> {
     }
 
     fn end(self) -> Result<Self::Ok> {
-        let inner = PyList::new(self.py, self.fields);
-        let dict = PyDict::new(self.py);
-        dict.set_item(self.name, inner)?;
-        Ok(dict)
+        Ok(PyTuple::new(self.py, self.fields))
     }
 }
 
 pub struct TupleVariant<'py> {
     py: Python<'py>,
-    name: &'static str,
     variant: &'static str,
     fields: Vec<&'py PyAny>,
 }
@@ -520,9 +559,8 @@ impl<'py> ser::SerializeTupleVariant for TupleVariant<'py> {
     }
 
     fn end(self) -> Result<Self::Ok> {
-        let inner = PyTuple::new(self.py, self.fields);
         let dict = PyDict::new(self.py);
-        dict.set_item(self.name, (self.variant, inner))?;
+        dict.set_item(self.variant, PyTuple::new(self.py, self.fields))?;
         Ok(dict)
     }
 }
@@ -565,7 +603,6 @@ impl<'py> ser::SerializeMap for Map<'py> {
 
 pub struct Struct<'py> {
     py: Python<'py>,
-    name: &'static str,
     fields: &'py PyDict,
 }
 
@@ -583,15 +620,12 @@ impl<'py> ser::SerializeStruct for Struct<'py> {
     }
 
     fn end(self) -> Result<Self::Ok> {
-        let dict = PyDict::new(self.py);
-        dict.set_item(self.name, self.fields)?;
-        Ok(dict)
+        Ok(self.fields)
     }
 }
 
 pub struct StructVariant<'py> {
     py: Python<'py>,
-    name: &'static str,
     variant: &'static str,
     fields: &'py PyDict,
 }
@@ -611,7 +645,7 @@ impl<'py> ser::SerializeStructVariant for StructVariant<'py> {
 
     fn end(self) -> Result<Self::Ok> {
         let dict = PyDict::new(self.py);
-        dict.set_item(self.name, (self.variant, self.fields))?;
+        dict.set_item(self.variant, self.fields)?;
         Ok(dict)
     }
 }
