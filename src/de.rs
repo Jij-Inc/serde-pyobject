@@ -354,22 +354,12 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
 
     fn deserialize_newtype_struct<V: de::Visitor<'de>>(
         self,
-        name: &'static str,
+        _name: &'static str,
         visitor: V,
     ) -> Result<V::Value> {
-        // Dict `{ "A": 1 }` is deserialized as `A(1)`
-        if self.0.is_instance_of::<PyDict>() {
-            let dict: &PyDict = self.0.extract()?;
-            if let Some(inner) = dict.get_item(name)? {
-                // Visitor of `#[derive(Deserialize)] struct A(u8);` requires tuple struct,
-                // and thus use 1-element "tuple" here
-                return visitor.visit_seq(SeqDeserializer {
-                    seq_reversed: vec![inner],
-                });
-            }
-        }
-        // Default to `any` case
-        self.deserialize_any(visitor)
+        visitor.visit_seq(SeqDeserializer {
+            seq_reversed: vec![self.0],
+        })
     }
 
     fn deserialize_option<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
