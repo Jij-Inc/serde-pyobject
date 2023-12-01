@@ -1,3 +1,9 @@
+//! PyO3's PyAny as a serde data format
+//!
+//! This crate provides a mapping from [serde data model](https://serde.rs/data-model.html)
+//! to Python objects.
+//!
+
 mod de;
 mod error;
 mod pylit;
