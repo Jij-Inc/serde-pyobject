@@ -12,6 +12,12 @@ impl From<PyErr> for Error {
     }
 }
 
+impl From<Error> for PyErr {
+    fn from(err: Error) -> Self {
+        err.0
+    }
+}
+
 impl ser::Error for Error {
     fn custom<T: Display>(msg: T) -> Self {
         Error(PyRuntimeError::new_err(msg.to_string()))
