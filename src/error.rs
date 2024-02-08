@@ -12,9 +12,9 @@ impl From<PyErr> for Error {
     }
 }
 
-impl Into<PyErr> for Error {
-    fn into(self) -> PyErr {
-        self.0
+impl From<Error> for PyErr {
+    fn from(err: Error) -> Self {
+        err.0
     }
 }
 
