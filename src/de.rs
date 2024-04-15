@@ -307,13 +307,13 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         V: Visitor<'de>,
     {
         if self.0.is_instance_of::<PyDict>() {
-            return visitor.visit_map(MapDeserializer::new(self.0.downcast().unwrap()));
+            return visitor.visit_map(MapDeserializer::new(self.0.downcast()?));
         }
         if self.0.is_instance_of::<PyList>() {
-            return visitor.visit_seq(SeqDeserializer::from_list(self.0.downcast().unwrap()));
+            return visitor.visit_seq(SeqDeserializer::from_list(self.0.downcast()?));
         }
         if self.0.is_instance_of::<PyTuple>() {
-            return visitor.visit_seq(SeqDeserializer::from_tuple(self.0.downcast().unwrap()));
+            return visitor.visit_seq(SeqDeserializer::from_tuple(self.0.downcast()?));
         }
         if self.0.is_instance_of::<PyString>() {
             return visitor.visit_str(self.0.extract()?);
@@ -342,7 +342,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
     ) -> Result<V::Value> {
         // Nested dict `{ "A": { "a": 1, "b": 2 } }` is deserialized as `A { a: 1, b: 2 }`
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &Bound<PyDict> = self.0.downcast().unwrap();
+            let dict: &Bound<PyDict> = self.0.downcast()?;
             if let Some(inner) = dict.get_item(name)? {
                 if let Ok(inner) = inner.downcast() {
                     return visitor.visit_map(MapDeserializer::new(inner));
@@ -407,7 +407,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
             });
         }
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &Bound<PyDict> = self.0.downcast().unwrap();
+            let dict: &Bound<PyDict> = self.0.downcast()?;
             if dict.len() == 1 {
                 let key = dict.keys().get_item(0).unwrap();
                 let value = dict.values().get_item(0).unwrap();
@@ -430,10 +430,10 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         visitor: V,
     ) -> Result<V::Value> {
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &Bound<PyDict> = self.0.downcast().unwrap(); // we just checked -- unwrapping is fine
+            let dict: &Bound<PyDict> = self.0.downcast()?;
             if let Some(value) = dict.get_item(name)? {
                 if value.is_instance_of::<PyTuple>() {
-                    let tuple: &Bound<PyTuple> = value.downcast().unwrap();
+                    let tuple: &Bound<PyTuple> = value.downcast()?;
                     return visitor.visit_seq(SeqDeserializer::from_tuple(tuple));
                 }
             }
