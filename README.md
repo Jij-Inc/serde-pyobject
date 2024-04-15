@@ -12,7 +12,7 @@ PyO3's PyAny as a serde data format
 
 ```rust
 use serde::Serialize;
-use pyo3::{Python, types::{PyAny, PyDict}};
+use pyo3::{Python, Bound, types::{PyAny, PyAnyMethods, PyDict}};
 use serde_pyobject::{to_pyobject, pydict};
 
 #[derive(Serialize)]
@@ -23,7 +23,7 @@ struct A {
 
 Python::with_gil(|py| {
     let a = A { a: 1, b: "test".to_string() };
-    let obj: &PyAny = to_pyobject(py, &a).unwrap();
+    let obj: Bound<PyAny> = to_pyobject(py, &a).unwrap();
     assert!(obj.eq(pydict! { py, "a" => 1, "b" => "test" }.unwrap()).unwrap());
 });
 ```
@@ -32,7 +32,7 @@ Python::with_gil(|py| {
 
 ```rust
 use serde::Deserialize;
-use pyo3::{Python, types::{PyAny, PyDict}};
+use pyo3::{Python, Bound, types::{PyAny, PyAnyMethods, PyDict}};
 use serde_pyobject::{from_pyobject, pydict};
 
 #[derive(Debug, PartialEq, Deserialize)]
@@ -42,7 +42,7 @@ struct A {
 }
 
 Python::with_gil(|py| {
-    let a: &PyDict = pydict! { py,
+    let a: Bound<PyDict> = pydict! { py,
       "a" => 1,
       "b" => "test"
     }
