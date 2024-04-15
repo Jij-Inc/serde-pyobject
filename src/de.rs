@@ -1,5 +1,5 @@
 use crate::error::{Error, Result};
-use pyo3::types::*;
+use pyo3::{types::*, Bound};
 use serde::{
     de::{self, value::StrDeserializer, MapAccess, SeqAccess, Visitor},
     forward_to_deserialize_any, Deserialize, Deserializer,
@@ -18,17 +18,17 @@ use serde::{
 /// Python::with_gil(|py| {
 ///     // integer
 ///     let any: Py<PyAny> = 42.into_py(py);
-///     let i: i32 = from_pyobject(any.into_ref(py)).unwrap();
+///     let i: i32 = from_pyobject(any.into_bound(py)).unwrap();
 ///     assert_eq!(i, 42);
 ///
 ///     // float
 ///     let any: Py<PyAny> = (0.1).into_py(py);
-///     let x: f32 = from_pyobject(any.into_ref(py)).unwrap();
+///     let x: f32 = from_pyobject(any.into_bound(py)).unwrap();
 ///     assert_eq!(x, 0.1);
 ///
 ///     // bool
 ///     let any: Py<PyAny> = true.into_py(py);
-///     let x: bool = from_pyobject(any.into_ref(py)).unwrap();
+///     let x: bool = from_pyobject(any.into_bound(py)).unwrap();
 ///     assert_eq!(x, true);
 /// });
 /// ```
@@ -41,11 +41,11 @@ use serde::{
 ///
 /// Python::with_gil(|py| {
 ///     let none = py.None();
-///     let option: Option<i32> = from_pyobject(none.into_ref(py)).unwrap();
+///     let option: Option<i32> = from_pyobject(none.into_bound(py)).unwrap();
 ///     assert_eq!(option, None);
 ///
 ///     let py_int: Py<PyAny> = 42.into_py(py);
-///     let i: Option<i32> = from_pyobject(py_int.into_ref(py)).unwrap();
+///     let i: Option<i32> = from_pyobject(py_int.into_bound(py)).unwrap();
 ///     assert_eq!(i, Some(42));
 /// })
 /// ```
@@ -57,7 +57,7 @@ use serde::{
 /// use serde_pyobject::from_pyobject;
 ///
 /// Python::with_gil(|py| {
-///     let py_unit = PyTuple::empty(py);
+///     let py_unit = PyTuple::empty_bound(py);
 ///     let unit: () = from_pyobject(py_unit).unwrap();
 ///     assert_eq!(unit, ());
 /// })
@@ -74,7 +74,7 @@ use serde::{
 /// struct UnitStruct;
 ///
 /// Python::with_gil(|py| {
-///     let py_unit = PyTuple::empty(py);
+///     let py_unit = PyTuple::empty_bound(py);
 ///     let unit: UnitStruct = from_pyobject(py_unit).unwrap();
 ///     assert_eq!(unit, UnitStruct);
 /// })
@@ -94,7 +94,7 @@ use serde::{
 /// }
 ///
 /// Python::with_gil(|py| {
-///     let any = PyString::new(py, "A");
+///     let any = PyString::new_bound(py, "A");
 ///     let out: E = from_pyobject(any).unwrap();
 ///     assert_eq!(out, E::A);
 /// })
@@ -104,14 +104,14 @@ use serde::{
 ///
 /// ```
 /// use serde::Deserialize;
-/// use pyo3::{Python, PyAny, IntoPy};
+/// use pyo3::{Python, Bound, PyAny, IntoPy};
 /// use serde_pyobject::from_pyobject;
 ///
 /// #[derive(Debug, PartialEq, Deserialize)]
 /// struct NewTypeStruct(u8);
 ///
 /// Python::with_gil(|py| {
-///     let any: &PyAny = 1_u32.into_py(py).into_ref(py);
+///     let any: Bound<PyAny> = 1_u32.into_py(py).into_bound(py);
 ///     let obj: NewTypeStruct = from_pyobject(any).unwrap();
 ///     assert_eq!(obj, NewTypeStruct(1));
 /// });
@@ -156,7 +156,7 @@ use serde::{
 /// use serde_pyobject::from_pyobject;
 ///
 /// Python::with_gil(|py| {
-///     let tuple = PyTuple::new(py, &[1, 2, 3]);
+///     let tuple = PyTuple::new_bound(py, &[1, 2, 3]);
 ///     let tuple: (i32, i32, i32) = from_pyobject(tuple).unwrap();
 ///     assert_eq!(tuple, (1, 2, 3));
 /// });
@@ -173,7 +173,7 @@ use serde::{
 /// struct T(u8, String);
 ///
 /// Python::with_gil(|py| {
-///     let tuple = PyTuple::new(py, &[1_u32.into_py(py), "test".into_py(py)]);
+///     let tuple = PyTuple::new_bound(py, &[1_u32.into_py(py), "test".into_py(py)]);
 ///     let obj: T = from_pyobject(tuple).unwrap();
 ///     assert_eq!(obj, T(1, "test".to_string()));
 /// });
@@ -236,7 +236,7 @@ use serde::{
 ///         "b" => "test"
 ///     }
 ///     .unwrap();
-///     let a: A = from_pyobject(dict.into_ref(py)).unwrap();
+///     let a: A = from_pyobject(dict.into_bound(py)).unwrap();
 ///     assert_eq!(
 ///         a,
 ///         A {
@@ -255,7 +255,7 @@ use serde::{
 ///         .unwrap()
 ///     }
 ///     .unwrap();
-///     let a: A = from_pyobject(dict.into_ref(py)).unwrap();
+///     let a: A = from_pyobject(dict.into_bound(py)).unwrap();
 ///     assert_eq!(
 ///         a,
 ///         A {
@@ -292,11 +292,12 @@ use serde::{
 ///     assert_eq!(obj, StructVariant::S { r: 1, g: 2, b: 3 });
 /// });
 /// ```
-pub fn from_pyobject<'py, 'de, T: Deserialize<'de>>(any: &'py PyAny) -> Result<T> {
+pub fn from_pyobject<'py, 'de, T: Deserialize<'de>, Any>(any: Bound<'py, Any>) -> Result<T> {
+    let any = any.into_any();
     T::deserialize(PyAnyDeserializer(any))
 }
 
-struct PyAnyDeserializer<'py>(&'py PyAny);
+struct PyAnyDeserializer<'py>(Bound<'py, PyAny>);
 
 impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
     type Error = Error;
@@ -306,13 +307,13 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         V: Visitor<'de>,
     {
         if self.0.is_instance_of::<PyDict>() {
-            return visitor.visit_map(MapDeserializer::new(self.0.extract()?));
+            return visitor.visit_map(MapDeserializer::new(self.0.downcast()?));
         }
         if self.0.is_instance_of::<PyList>() {
-            return visitor.visit_seq(SeqDeserializer::from_list(self.0.extract()?));
+            return visitor.visit_seq(SeqDeserializer::from_list(self.0.downcast()?));
         }
         if self.0.is_instance_of::<PyTuple>() {
-            return visitor.visit_seq(SeqDeserializer::from_tuple(self.0.extract()?));
+            return visitor.visit_seq(SeqDeserializer::from_tuple(self.0.downcast()?));
         }
         if self.0.is_instance_of::<PyString>() {
             return visitor.visit_str(self.0.extract()?);
@@ -341,9 +342,9 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
     ) -> Result<V::Value> {
         // Nested dict `{ "A": { "a": 1, "b": 2 } }` is deserialized as `A { a: 1, b: 2 }`
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &PyDict = self.0.extract()?;
+            let dict: &Bound<PyDict> = self.0.downcast()?;
             if let Some(inner) = dict.get_item(name)? {
-                if let Ok(inner) = inner.extract() {
+                if let Ok(inner) = inner.downcast() {
                     return visitor.visit_map(MapDeserializer::new(inner));
                 }
             }
@@ -371,7 +372,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
     }
 
     fn deserialize_unit<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
-        if self.0.is(PyTuple::empty(self.0.py())) {
+        if self.0.is(&PyTuple::empty_bound(self.0.py())) {
             visitor.visit_unit()
         } else {
             self.deserialize_any(visitor)
@@ -383,7 +384,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         _name: &'static str,
         visitor: V,
     ) -> Result<V::Value> {
-        if self.0.is(PyTuple::empty(self.0.py())) {
+        if self.0.is(&PyTuple::empty_bound(self.0.py())) {
             visitor.visit_unit()
         } else {
             self.deserialize_any(visitor)
@@ -399,14 +400,14 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         if self.0.is_instance_of::<PyString>() {
             let variant = self.0.extract()?;
             let py = self.0.py();
-            let none = py.None().into_ref(py);
+            let none = py.None().into_bound(py);
             return visitor.visit_enum(EnumDeserializer {
                 variant,
                 inner: none,
             });
         }
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &PyDict = self.0.extract()?;
+            let dict: &Bound<PyDict> = self.0.downcast()?;
             if dict.len() == 1 {
                 let key = dict.keys().get_item(0).unwrap();
                 let value = dict.values().get_item(0).unwrap();
@@ -429,10 +430,10 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         visitor: V,
     ) -> Result<V::Value> {
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &PyDict = self.0.extract()?;
+            let dict: &Bound<PyDict> = self.0.downcast()?;
             if let Some(value) = dict.get_item(name)? {
                 if value.is_instance_of::<PyTuple>() {
-                    let tuple: &PyTuple = value.extract()?;
+                    let tuple: &Bound<PyTuple> = value.downcast()?;
                     return visitor.visit_seq(SeqDeserializer::from_tuple(tuple));
                 }
             }
@@ -448,11 +449,11 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
 }
 
 struct SeqDeserializer<'py> {
-    seq_reversed: Vec<&'py PyAny>,
+    seq_reversed: Vec<Bound<'py, PyAny>>,
 }
 
 impl<'py> SeqDeserializer<'py> {
-    fn from_list(list: &'py PyList) -> Self {
+    fn from_list(list: &Bound<'py, PyList>) -> Self {
         let mut seq_reversed = Vec::new();
         for item in list.iter().rev() {
             seq_reversed.push(item);
@@ -460,7 +461,7 @@ impl<'py> SeqDeserializer<'py> {
         Self { seq_reversed }
     }
 
-    fn from_tuple(tuple: &'py PyTuple) -> Self {
+    fn from_tuple(tuple: &Bound<'py, PyTuple>) -> Self {
         let mut seq_reversed = Vec::new();
         for item in tuple.iter().rev() {
             seq_reversed.push(item);
@@ -483,12 +484,12 @@ impl<'de, 'py> SeqAccess<'de> for SeqDeserializer<'py> {
 }
 
 struct MapDeserializer<'py> {
-    keys: Vec<&'py PyAny>,
-    values: Vec<&'py PyAny>,
+    keys: Vec<Bound<'py, PyAny>>,
+    values: Vec<Bound<'py, PyAny>>,
 }
 
 impl<'py> MapDeserializer<'py> {
-    fn new(dict: &'py PyDict) -> Self {
+    fn new(dict: &Bound<'py, PyDict>) -> Self {
         let mut keys = Vec::new();
         let mut values = Vec::new();
         for (key, value) in dict.iter() {
@@ -527,9 +528,10 @@ impl<'de, 'py> MapAccess<'de> for MapDeserializer<'py> {
     }
 }
 
+// this lifetime is technically no longer 'py
 struct EnumDeserializer<'py> {
     variant: &'py str,
-    inner: &'py PyAny,
+    inner: Bound<'py, PyAny>,
 }
 
 impl<'de, 'py> de::EnumAccess<'de> for EnumDeserializer<'py> {

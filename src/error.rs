@@ -1,4 +1,4 @@
-use pyo3::{exceptions::PyRuntimeError, PyErr};
+use pyo3::{exceptions::PyRuntimeError, DowncastError, PyErr};
 use serde::{de, ser};
 use std::fmt::{self, Display};
 
@@ -8,6 +8,13 @@ pub struct Error(pub PyErr);
 
 impl From<PyErr> for Error {
     fn from(err: PyErr) -> Self {
+        Error(err)
+    }
+}
+
+impl From<DowncastError<'_, '_>> for Error {
+    fn from(err: DowncastError) -> Self {
+        let err: PyErr = err.into();
         Error(err)
     }
 }
