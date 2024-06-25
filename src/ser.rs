@@ -85,7 +85,7 @@ use serde::{ser, Serialize};
 ///
 /// Python::with_gil(|py| {
 ///     let obj = to_pyobject(py, &()).unwrap();
-///     assert!(obj.is(PyTuple::empty(py)));
+///     assert!(obj.is(&PyTuple::empty_bound(py)));
 /// });
 /// ```
 ///
@@ -103,7 +103,7 @@ use serde::{ser, Serialize};
 ///
 /// Python::with_gil(|py| {
 ///     let obj = to_pyobject(py, &UnitStruct {}).unwrap();
-///     assert!(obj.eq(PyTuple::empty(py)).unwrap());
+///     assert!(obj.eq(PyTuple::empty_bound(py)).unwrap());
 /// });
 /// ```
 ///
@@ -183,7 +183,7 @@ use serde::{ser, Serialize};
 ///
 /// Python::with_gil(|py| {
 ///     let obj = to_pyobject(py, &(3, "test")).unwrap();
-///     assert!(obj.eq(PyTuple::new(py, [3.into_py(py), "test".into_py(py)])).unwrap());
+///     assert!(obj.eq(PyTuple::new_bound(py, [3.into_py(py), "test".into_py(py)])).unwrap());
 /// });
 /// ```
 ///
@@ -199,7 +199,7 @@ use serde::{ser, Serialize};
 ///
 /// Python::with_gil(|py| {
 ///     let obj = to_pyobject(py, &TupleStruct(1, 2, 3)).unwrap();
-///     assert!(obj.eq(PyTuple::new(py, [1, 2, 3])).unwrap());
+///     assert!(obj.eq(PyTuple::new_bound(py, [1, 2, 3])).unwrap());
 /// });
 /// ```
 ///
