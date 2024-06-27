@@ -316,7 +316,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
             return visitor.visit_seq(SeqDeserializer::from_tuple(self.0.downcast()?));
         }
         if self.0.is_instance_of::<PyString>() {
-            return visitor.visit_str(self.0.extract()?);
+            return visitor.visit_str(&self.0.extract::<String>()?);
         }
         if self.0.is_instance_of::<PyBool>() {
             // must be match before PyLong
@@ -398,11 +398,11 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         visitor: V,
     ) -> Result<V::Value> {
         if self.0.is_instance_of::<PyString>() {
-            let variant = self.0.extract()?;
+            let variant: String = self.0.extract()?;
             let py = self.0.py();
             let none = py.None().into_bound(py);
             return visitor.visit_enum(EnumDeserializer {
-                variant,
+                variant: &variant,
                 inner: none,
             });
         }
@@ -412,9 +412,9 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
                 let key = dict.keys().get_item(0).unwrap();
                 let value = dict.values().get_item(0).unwrap();
                 if key.is_instance_of::<PyString>() {
-                    let variant = key.extract()?;
+                    let variant: String = key.extract()?;
                     return visitor.visit_enum(EnumDeserializer {
-                        variant,
+                        variant: &variant,
                         inner: value,
                     });
                 }
