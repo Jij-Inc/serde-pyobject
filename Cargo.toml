@@ -10,7 +10,7 @@ keywords      = ["serde", "pyo3", "python", "ffi"]
 license       = "MIT OR Apache-2.0"
 
 [dependencies]
-pyo3 = "0.22.0"
+pyo3 = ">=0.22.0,<0.24.0"
 serde = "1.0.190"
 
 [dev-dependencies]
