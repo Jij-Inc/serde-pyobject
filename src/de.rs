@@ -299,7 +299,7 @@ pub fn from_pyobject<'py, 'de, T: Deserialize<'de>, Any>(any: Bound<'py, Any>) -
 
 struct PyAnyDeserializer<'py>(Bound<'py, PyAny>);
 
-impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
+impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
     type Error = Error;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
@@ -470,7 +470,7 @@ impl<'py> SeqDeserializer<'py> {
     }
 }
 
-impl<'de, 'py> SeqAccess<'de> for SeqDeserializer<'py> {
+impl<'de> SeqAccess<'de> for SeqDeserializer<'_> {
     type Error = Error;
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
     where
@@ -500,7 +500,7 @@ impl<'py> MapDeserializer<'py> {
     }
 }
 
-impl<'de, 'py> MapAccess<'de> for MapDeserializer<'py> {
+impl<'de> MapAccess<'de> for MapDeserializer<'_> {
     type Error = Error;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
@@ -534,7 +534,7 @@ struct EnumDeserializer<'py> {
     inner: Bound<'py, PyAny>,
 }
 
-impl<'de, 'py> de::EnumAccess<'de> for EnumDeserializer<'py> {
+impl<'de> de::EnumAccess<'de> for EnumDeserializer<'_> {
     type Error = Error;
     type Variant = Self;
 
@@ -549,7 +549,7 @@ impl<'de, 'py> de::EnumAccess<'de> for EnumDeserializer<'py> {
     }
 }
 
-impl<'de, 'py> de::VariantAccess<'de> for EnumDeserializer<'py> {
+impl<'de> de::VariantAccess<'de> for EnumDeserializer<'_> {
     type Error = Error;
 
     fn unit_variant(self) -> Result<()> {
