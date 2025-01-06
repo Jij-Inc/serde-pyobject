@@ -57,7 +57,7 @@ use serde::{
 /// use serde_pyobject::from_pyobject;
 ///
 /// Python::with_gil(|py| {
-///     let py_unit = PyTuple::empty_bound(py);
+///     let py_unit = PyTuple::empty(py);
 ///     let unit: () = from_pyobject(py_unit).unwrap();
 ///     assert_eq!(unit, ());
 /// })
@@ -74,7 +74,7 @@ use serde::{
 /// struct UnitStruct;
 ///
 /// Python::with_gil(|py| {
-///     let py_unit = PyTuple::empty_bound(py);
+///     let py_unit = PyTuple::empty(py);
 ///     let unit: UnitStruct = from_pyobject(py_unit).unwrap();
 ///     assert_eq!(unit, UnitStruct);
 /// })
@@ -322,7 +322,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
             // must be match before PyLong
             return visitor.visit_bool(self.0.extract()?);
         }
-        if self.0.is_instance_of::<PyLong>() {
+        if self.0.is_instance_of::<PyInt>() {
             return visitor.visit_i64(self.0.extract()?);
         }
         if self.0.is_instance_of::<PyFloat>() {
@@ -372,7 +372,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
     }
 
     fn deserialize_unit<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
-        if self.0.is(&PyTuple::empty_bound(self.0.py())) {
+        if self.0.is(&PyTuple::empty(self.0.py())) {
             visitor.visit_unit()
         } else {
             self.deserialize_any(visitor)
@@ -384,7 +384,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         _name: &'static str,
         visitor: V,
     ) -> Result<V::Value> {
-        if self.0.is(&PyTuple::empty_bound(self.0.py())) {
+        if self.0.is(&PyTuple::empty(self.0.py())) {
             visitor.visit_unit()
         } else {
             self.deserialize_any(visitor)

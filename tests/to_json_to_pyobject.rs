@@ -4,7 +4,7 @@ use serde::Serialize;
 
 fn to_json_to_pyobject<T: Serialize>(py: Python<'_>, obj: T) -> PyResult<Bound<PyAny>> {
     let json = serde_json::to_string(&obj).unwrap();
-    let obj = py.import_bound("json")?.getattr("loads")?.call1((json,))?;
+    let obj = py.import("json")?.getattr("loads")?.call1((json,))?;
     Ok(obj)
 }
 
@@ -43,10 +43,10 @@ fn option() {
 // - to_pyobject = `()`
 // - to_json_to_pyobject = `None`
 
-#[derive(Serialize)]
-struct UnitStruct;
-
 // skip unit_struct
+//
+// #[derive(Serialize)]
+// struct UnitStruct;
 //
 // Input: `UnitStruct`
 // - to_pyobject = `()`
@@ -94,10 +94,10 @@ fn seq() {
 // - to_pyobject = `(1, "test")`
 // - to_json_to_pyobject = `[1, "test"]`
 
-#[derive(Serialize)]
-struct TupleStruct(u8, u8, u8);
-
 // Skip tuple_struct
+//
+// #[derive(Serialize)]
+// struct TupleStruct(u8, u8, u8);
 //
 // Input: `TupleStruct(1, 2, 3)`
 // Output:
