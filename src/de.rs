@@ -57,7 +57,7 @@ use serde::{
 /// use serde_pyobject::from_pyobject;
 ///
 /// Python::with_gil(|py| {
-///     let py_unit = PyTuple::empty_bound(py);
+///     let py_unit = PyTuple::empty(py);
 ///     let unit: () = from_pyobject(py_unit).unwrap();
 ///     assert_eq!(unit, ());
 /// })
@@ -74,7 +74,7 @@ use serde::{
 /// struct UnitStruct;
 ///
 /// Python::with_gil(|py| {
-///     let py_unit = PyTuple::empty_bound(py);
+///     let py_unit = PyTuple::empty(py);
 ///     let unit: UnitStruct = from_pyobject(py_unit).unwrap();
 ///     assert_eq!(unit, UnitStruct);
 /// })
@@ -299,7 +299,7 @@ pub fn from_pyobject<'py, 'de, T: Deserialize<'de>, Any>(any: Bound<'py, Any>) -
 
 struct PyAnyDeserializer<'py>(Bound<'py, PyAny>);
 
-impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
+impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
     type Error = Error;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
@@ -322,7 +322,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
             // must be match before PyLong
             return visitor.visit_bool(self.0.extract()?);
         }
-        if self.0.is_instance_of::<PyLong>() {
+        if self.0.is_instance_of::<PyInt>() {
             return visitor.visit_i64(self.0.extract()?);
         }
         if self.0.is_instance_of::<PyFloat>() {
@@ -372,7 +372,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
     }
 
     fn deserialize_unit<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
-        if self.0.is(&PyTuple::empty_bound(self.0.py())) {
+        if self.0.is(&PyTuple::empty(self.0.py())) {
             visitor.visit_unit()
         } else {
             self.deserialize_any(visitor)
@@ -384,7 +384,7 @@ impl<'de, 'py> de::Deserializer<'de> for PyAnyDeserializer<'py> {
         _name: &'static str,
         visitor: V,
     ) -> Result<V::Value> {
-        if self.0.is(&PyTuple::empty_bound(self.0.py())) {
+        if self.0.is(&PyTuple::empty(self.0.py())) {
             visitor.visit_unit()
         } else {
             self.deserialize_any(visitor)
@@ -470,7 +470,7 @@ impl<'py> SeqDeserializer<'py> {
     }
 }
 
-impl<'de, 'py> SeqAccess<'de> for SeqDeserializer<'py> {
+impl<'de> SeqAccess<'de> for SeqDeserializer<'_> {
     type Error = Error;
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
     where
@@ -500,7 +500,7 @@ impl<'py> MapDeserializer<'py> {
     }
 }
 
-impl<'de, 'py> MapAccess<'de> for MapDeserializer<'py> {
+impl<'de> MapAccess<'de> for MapDeserializer<'_> {
     type Error = Error;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
@@ -534,7 +534,7 @@ struct EnumDeserializer<'py> {
     inner: Bound<'py, PyAny>,
 }
 
-impl<'de, 'py> de::EnumAccess<'de> for EnumDeserializer<'py> {
+impl<'de> de::EnumAccess<'de> for EnumDeserializer<'_> {
     type Error = Error;
     type Variant = Self;
 
@@ -549,7 +549,7 @@ impl<'de, 'py> de::EnumAccess<'de> for EnumDeserializer<'py> {
     }
 }
 
-impl<'de, 'py> de::VariantAccess<'de> for EnumDeserializer<'py> {
+impl<'de> de::VariantAccess<'de> for EnumDeserializer<'_> {
     type Error = Error;
 
     fn unit_variant(self) -> Result<()> {
