@@ -92,3 +92,9 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+
+      - name: Run tests with abi3 feature
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features abi3-py38

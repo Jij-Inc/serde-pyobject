@@ -102,7 +102,7 @@ macro_rules! pydict {
 ///     let list = pylist![py; 1, "two"].unwrap();
 ///     assert_eq!(list.len(), 2);
 ///     assert_eq!(list.get_item(0).unwrap().extract::<i32>().unwrap(), 1);
-///     assert_eq!(list.get_item(1).unwrap().extract::<&str>().unwrap(), "two");
+///     assert_eq!(list.get_item(1).unwrap().extract::<String>().unwrap(), "two");
 /// })
 /// ```
 ///
@@ -118,7 +118,7 @@ macro_rules! pydict {
 ///    let list = list.into_bound(py);
 ///    assert_eq!(list.len(), 2);
 ///    assert_eq!(list.get_item(0).unwrap().extract::<i32>().unwrap(), 1);
-///    assert_eq!(list.get_item(1).unwrap().extract::<&str>().unwrap(), "two");
+///    assert_eq!(list.get_item(1).unwrap().extract::<String>().unwrap(), "two");
 /// });
 /// ```
 ///
