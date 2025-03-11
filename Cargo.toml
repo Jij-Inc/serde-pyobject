@@ -1,13 +1,13 @@
 [package]
 name = "serde-pyobject"
-version = "0.5.1"
+version = "0.6.0"
 edition = "2021"
 
-description   = "PyO3's PyAny as a serde data format"
+description = "PyO3's PyAny as a serde data format"
 documentation = "https://docs.rs/serde-pyobject/"
-repository    = "https://github.com/Jij-Inc/serde-pyobject"
-keywords      = ["serde", "pyo3", "python", "ffi"]
-license       = "MIT OR Apache-2.0"
+repository = "https://github.com/Jij-Inc/serde-pyobject"
+keywords = ["serde", "pyo3", "python", "ffi"]
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 pyo3 = "0.23.0"
