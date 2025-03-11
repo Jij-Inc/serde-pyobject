@@ -34,7 +34,7 @@ jobs:
         run: cargo doc --all --no-deps
 
       - name: Upload html
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rustdoc
           path: ./target/doc
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download rustdoc
-        uses: actions/download-artifact@v4.1.7
+        uses: actions/download-artifact@v4
         with:
           name: rustdoc
           path: .
