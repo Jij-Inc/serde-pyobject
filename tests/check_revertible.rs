@@ -1,5 +1,7 @@
+use std::{any::Any, collections::HashMap};
+
 use maplit::hashmap;
-use pyo3::prelude::*;
+use pyo3::{ffi::c_str, prelude::*};
 use serde::{Deserialize, Serialize};
 use serde_pyobject::{from_pyobject, to_pyobject};
 
@@ -132,4 +134,51 @@ fn struct_variant() {
         g: 20,
         b: 30,
     });
+}
+
+
+#[test]
+fn check_python_object() {
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct MyClass {
+        name: String,
+        age: i32,
+    }
+
+    Python::with_gil(|py| {
+        // Create an instance of Python object
+        py.run(
+            c_str!(
+                r#"
+class MyClass:
+    def __init__(self, name: str, age: int):
+        self.name = name
+        self.age = age
+        "#
+            ),
+            None,
+            None,
+        )
+        .unwrap();
+        // Create an instance of MyClass
+        let my_python_class = py
+            .eval(
+                c_str!(r#"
+MyClass("John", 30)
+"#
+                ),
+                None,
+                None,
+            )
+            .unwrap();
+
+        let my_rust_class = MyClass {
+            name: "John".to_string(),
+            age: 30,
+        };
+        let any: Bound<'_, PyAny> = to_pyobject(py, &my_rust_class).unwrap();
+        let rust_version: MyClass = from_pyobject(my_python_class).unwrap();
+        let python_version: MyClass = from_pyobject(any).unwrap();
+        assert_eq!(rust_version, python_version);
+    })
 }

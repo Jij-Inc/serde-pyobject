@@ -328,6 +328,9 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         if self.0.is_instance_of::<PyFloat>() {
             return visitor.visit_f64(self.0.extract()?);
         }
+        if self.0.hasattr("__dict__")? {
+            return visitor.visit_map(MapDeserializer::new(self.0.getattr("__dict__")?.downcast()?));
+        }
         if self.0.is_none() {
             return visitor.visit_none();
         }
