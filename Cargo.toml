@@ -21,7 +21,7 @@ serde = { version = "1.0.190", features = ["derive"] }
 serde_json = "1.0.108"
 
 [features]
-default = ["dataclass_support", "pydantic_support"]
+default = []
 abi3-py38 = ["pyo3/abi3-py38"]
 dataclass_support = ["dep:once_cell"]
 pydantic_support = ["dep:once_cell"]
