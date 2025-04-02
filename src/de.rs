@@ -330,8 +330,7 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         }
         #[cfg(feature = "dataclass_support")]
         if crate::py_module_cache::is_dataclass(self.0.py(), &self.0)? {
-            // Use dataclasses.asdict to get the dict representation of the object
-            // dataclasses.asdict(obj)
+            // Use dataclasses.asdict(obj) to get the dict representtion of the object
             let dataclasses = PyModule::import(self.0.py(), "dataclasses")?;
             let asdict = dataclasses.getattr("asdict")?;
             let dict = asdict.call1((self.0,))?;
@@ -339,8 +338,7 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         }
         #[cfg(feature = "pydantic_support")]
         if crate::py_module_cache::is_pydantic_base_model(self.0.py(), &self.0)? {
-            // Use pydantic.BaseModel.model_dump() to get the dict representation of the object
-            // call model_dump() on the object
+            // Use pydantic.BaseModel#model_dump() to get the dict representation of the object
             let model_dump = self.0.getattr("model_dump")?;
             let dict = model_dump.call0()?;
             return visitor.visit_map(MapDeserializer::new(dict.downcast()?));
