@@ -1,6 +1,6 @@
 [package]
 name = "serde-pyobject"
-version = "0.6.1"
+version = "0.6.2"
 edition = "2021"
 
 description = "PyO3's PyAny as a serde data format"
