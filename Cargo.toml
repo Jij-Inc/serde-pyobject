@@ -16,9 +16,8 @@ serde = "1"
 [dev-dependencies]
 maplit = "1.0.2"
 pyo3 = { version = ">=0.23.0, <0.25.0", features = ["auto-initialize"] }
-serde = { version = ">=1.0", features = ["derive"] }
-serde_json = ">=1.0"
-serde = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0"
 
 [features]
 abi3-py38 = ["pyo3/abi3-py38"]
