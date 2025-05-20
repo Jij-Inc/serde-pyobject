@@ -331,9 +331,15 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         if self.0.hasattr("__dict__")? {
             return visitor.visit_map(MapDeserializer::new(self.0.getattr("__dict__")?.downcast()?));
         }
+        if self.0.hasattr("__slots__")? {
+            // __slots__ and __dict__ are mutually exclusive, see
+            // https://docs.python.org/3/reference/datamodel.html#slots 
+            return visitor.visit_map(MapDeserializer::from_slots(&self.0)?);
+        }
         if self.0.is_none() {
             return visitor.visit_none();
         }
+        
         unreachable!("Unsupported type: {}", self.0.get_type());
     }
 
@@ -500,6 +506,20 @@ impl<'py> MapDeserializer<'py> {
             values.push(value);
         }
         Self { keys, values }
+    }
+
+    fn from_slots(obj: &Bound<'py, PyAny>) -> Result<Self> {
+        let mut keys = vec![];
+        let mut values = vec![];
+        for key in obj.getattr("__slots__")?.try_iter()? {
+            let key = key?;
+            keys.push(key.clone());
+            let v = obj.getattr(key.str()?)?;
+            values.push(v);
+        }
+        Ok(Self {
+            keys, values
+        })
     }
 }
 
