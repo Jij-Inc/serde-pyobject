@@ -1,5 +1,3 @@
-use std::{any::Any, collections::HashMap};
-
 use maplit::hashmap;
 use pyo3::{ffi::c_str, prelude::*};
 use serde::{Deserialize, Serialize};
@@ -136,7 +134,6 @@ fn struct_variant() {
     });
 }
 
-
 #[test]
 fn check_python_object() {
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -163,7 +160,8 @@ class MyClass:
         // Create an instance of MyClass
         let my_python_class = py
             .eval(
-                c_str!(r#"
+                c_str!(
+                    r#"
 MyClass("John", 30)
 "#
                 ),

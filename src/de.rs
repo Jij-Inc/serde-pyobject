@@ -329,17 +329,19 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
             return visitor.visit_f64(self.0.extract()?);
         }
         if self.0.hasattr("__dict__")? {
-            return visitor.visit_map(MapDeserializer::new(self.0.getattr("__dict__")?.downcast()?));
+            return visitor.visit_map(MapDeserializer::new(
+                self.0.getattr("__dict__")?.downcast()?,
+            ));
         }
         if self.0.hasattr("__slots__")? {
             // __slots__ and __dict__ are mutually exclusive, see
-            // https://docs.python.org/3/reference/datamodel.html#slots 
+            // https://docs.python.org/3/reference/datamodel.html#slots
             return visitor.visit_map(MapDeserializer::from_slots(&self.0)?);
         }
         if self.0.is_none() {
             return visitor.visit_none();
         }
-        
+
         unreachable!("Unsupported type: {}", self.0.get_type());
     }
 
@@ -517,9 +519,7 @@ impl<'py> MapDeserializer<'py> {
             let v = obj.getattr(key.str()?)?;
             values.push(v);
         }
-        Ok(Self {
-            keys, values
-        })
+        Ok(Self { keys, values })
     }
 }
 
