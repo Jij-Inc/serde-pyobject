@@ -1,6 +1,6 @@
 [package]
 name = "serde-pyobject"
-version = "0.6.3"
+version = "0.6.4"
 edition = "2021"
 
 description = "PyO3's PyAny as a serde data format"
@@ -16,8 +16,8 @@ serde = "1.0.190"
 [dev-dependencies]
 maplit = "1.0.2"
 pyo3 = { version = ">=0.26.0", features = ["auto-initialize"] }
-serde = { version = "1.0.190", features = ["derive"] }
-serde_json = "1.0.108"
+serde = { version = ">=1.0.0", features = ["derive"] }
+serde_json = ">=1.0.0"
 
 [features]
 abi3-py38 = ["pyo3/abi3-py38"]
