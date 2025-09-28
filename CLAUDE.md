@@ -53,4 +53,4 @@ Tests are organized in `tests/` directory:
 - `to_json_to_pyobject.rs`: Cross-validation tests comparing direct serialization vs JSON roundtrip
 - `check_revertible.rs`: Bidirectional conversion tests (serialize → deserialize → compare)
 
-The crate uses Python's GIL (`Python::with_gil`) for all Python object operations.
+The crate uses Python's GIL (`Python::attach`) for all Python object operations.

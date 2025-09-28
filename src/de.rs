@@ -15,7 +15,7 @@ use serde::{
 /// use pyo3::{Python, Py, PyAny, IntoPy};
 /// use serde_pyobject::from_pyobject;
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     // integer
 ///     let any: Py<PyAny> = 42.into_py(py);
 ///     let i: i32 = from_pyobject(any.into_bound(py)).unwrap();
@@ -39,7 +39,7 @@ use serde::{
 /// use pyo3::{Python, Py, PyAny, IntoPy};
 /// use serde_pyobject::from_pyobject;
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let none = py.None();
 ///     let option: Option<i32> = from_pyobject(none.into_bound(py)).unwrap();
 ///     assert_eq!(option, None);
@@ -56,7 +56,7 @@ use serde::{
 /// use pyo3::{Python, types::PyTuple};
 /// use serde_pyobject::from_pyobject;
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let py_unit = PyTuple::empty(py);
 ///     let unit: () = from_pyobject(py_unit).unwrap();
 ///     assert_eq!(unit, ());
@@ -73,7 +73,7 @@ use serde::{
 /// #[derive(Debug, PartialEq, Deserialize)]
 /// struct UnitStruct;
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let py_unit = PyTuple::empty(py);
 ///     let unit: UnitStruct = from_pyobject(py_unit).unwrap();
 ///     assert_eq!(unit, UnitStruct);
@@ -93,7 +93,7 @@ use serde::{
 ///     B,
 /// }
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let any = PyString::new_bound(py, "A");
 ///     let out: E = from_pyobject(any).unwrap();
 ///     assert_eq!(out, E::A);
@@ -110,7 +110,7 @@ use serde::{
 /// #[derive(Debug, PartialEq, Deserialize)]
 /// struct NewTypeStruct(u8);
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let any: Bound<PyAny> = 1_u32.into_py(py).into_bound(py);
 ///     let obj: NewTypeStruct = from_pyobject(any).unwrap();
 ///     assert_eq!(obj, NewTypeStruct(1));
@@ -129,7 +129,7 @@ use serde::{
 ///     N(u8),
 /// }
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let dict = pydict! { py, "N" => 41 }.unwrap();
 ///     let obj: NewTypeVariant = from_pyobject(dict).unwrap();
 ///     assert_eq!(obj, NewTypeVariant::N(41));
@@ -142,7 +142,7 @@ use serde::{
 /// use pyo3::Python;
 /// use serde_pyobject::{from_pyobject, pylist};
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let list = pylist![py; 1, 2, 3].unwrap();
 ///     let seq: Vec<i32> = from_pyobject(list).unwrap();
 ///     assert_eq!(seq, vec![1, 2, 3]);
@@ -155,7 +155,7 @@ use serde::{
 /// use pyo3::{Python, types::PyTuple};
 /// use serde_pyobject::from_pyobject;
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let tuple = PyTuple::new_bound(py, &[1, 2, 3]);
 ///     let tuple: (i32, i32, i32) = from_pyobject(tuple).unwrap();
 ///     assert_eq!(tuple, (1, 2, 3));
@@ -172,7 +172,7 @@ use serde::{
 /// #[derive(Debug, PartialEq, Deserialize)]
 /// struct T(u8, String);
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let tuple = PyTuple::new_bound(py, &[1_u32.into_py(py), "test".into_py(py)]);
 ///     let obj: T = from_pyobject(tuple).unwrap();
 ///     assert_eq!(obj, T(1, "test".to_string()));
@@ -191,7 +191,7 @@ use serde::{
 ///     T(u8, u8),
 /// }
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let dict = pydict! { py, "T" => (1, 2) }.unwrap();
 ///     let obj: TupleVariant = from_pyobject(dict).unwrap();
 ///     assert_eq!(obj, TupleVariant::T(1, 2));
@@ -205,7 +205,7 @@ use serde::{
 /// use serde_pyobject::{from_pyobject, pydict};
 /// use std::collections::BTreeMap;
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let dict = pydict! { py,
 ///         "a" => "hom",
 ///         "b" => "test"
@@ -230,7 +230,7 @@ use serde::{
 ///     b: String,
 /// }
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let dict = pydict! {
 ///         "a" => 1,
 ///         "b" => "test"
@@ -246,7 +246,7 @@ use serde::{
 ///     );
 /// });
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let dict = pydict! {
 ///         "A" => pydict! {
 ///             "a" => 1,
@@ -278,7 +278,7 @@ use serde::{
 ///     S { r: u8, g: u8, b: u8 },
 /// }
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let dict = pydict! {
 ///         py,
 ///         "S" => pydict! {

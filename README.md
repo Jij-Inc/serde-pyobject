@@ -21,7 +21,7 @@ struct A {
     b: String,
 }
 
-Python::with_gil(|py| {
+Python::attach(|py| {
     let a = A { a: 1, b: "test".to_string() };
     let obj: Bound<PyAny> = to_pyobject(py, &a).unwrap();
     assert!(obj.eq(pydict! { py, "a" => 1, "b" => "test" }.unwrap()).unwrap());
@@ -41,7 +41,7 @@ struct A {
     b: String,
 }
 
-Python::with_gil(|py| {
+Python::attach(|py| {
     let a: Bound<PyDict> = pydict! { py,
       "a" => 1,
       "b" => "test"

@@ -9,7 +9,7 @@ fn to_json_to_pyobject<T: Serialize>(py: Python<'_>, obj: T) -> PyResult<Bound<P
 }
 
 fn test(obj: impl Serialize) {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let direct = serde_pyobject::to_pyobject(py, &obj).unwrap();
         let by_json = to_json_to_pyobject(py, obj).unwrap();
         assert!(dbg!(direct).eq(dbg!(by_json)).unwrap());
