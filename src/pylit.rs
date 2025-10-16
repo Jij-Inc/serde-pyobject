@@ -9,7 +9,7 @@
 /// use pyo3::{Python, Bound, types::{PyDict, PyDictMethods, PyAnyMethods}};
 /// use serde_pyobject::pydict;
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let dict: Bound<PyDict> = pydict! {
 ///         py,
 ///         "foo" => 42,
@@ -48,7 +48,7 @@
 /// }
 /// .unwrap();
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let dict = dict.into_bound(py);
 ///     assert_eq!(
 ///         dict.get_item("foo")
@@ -74,13 +74,13 @@ macro_rules! pydict {
     ($py:expr, $($key:expr => $value:expr),*) => {
         (|| -> $crate::pyo3::PyResult<$crate::pyo3::Bound<$crate::pyo3::types::PyDict>> {
             use $crate::pyo3::types::PyDictMethods;
-            let dict = $crate::pyo3::types::PyDict::new_bound($py);
+            let dict = $crate::pyo3::types::PyDict::new($py);
             $(dict.set_item($key, $value)?;)*
             Ok(dict)
         })()
     };
     ($($key:expr => $value:expr),*) => {
-        $crate::pyo3::Python::with_gil(|py| -> $crate::pyo3::PyResult<$crate::pyo3::Py<$crate::pyo3::types::PyDict>> {
+        $crate::pyo3::Python::attach(|py| -> $crate::pyo3::PyResult<$crate::pyo3::Py<$crate::pyo3::types::PyDict>> {
             let dict = pydict!(py, $($key => $value),*)?;
             Ok(dict.into())
         })
@@ -98,7 +98,7 @@ macro_rules! pydict {
 /// use pyo3::{Python, types::{PyList, PyListMethods, PyAnyMethods}};
 /// use serde_pyobject::pylist;
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///     let list = pylist![py; 1, "two"].unwrap();
 ///     assert_eq!(list.len(), 2);
 ///     assert_eq!(list.get_item(0).unwrap().extract::<i32>().unwrap(), 1);
@@ -114,7 +114,7 @@ macro_rules! pydict {
 ///
 /// let list: Py<PyList> = pylist![1, "two"].unwrap();
 ///
-/// Python::with_gil(|py| {
+/// Python::attach(|py| {
 ///    let list = list.into_bound(py);
 ///    assert_eq!(list.len(), 2);
 ///    assert_eq!(list.get_item(0).unwrap().extract::<i32>().unwrap(), 1);
@@ -127,13 +127,13 @@ macro_rules! pylist {
     ($py:expr; $($value:expr),*) => {
         (|| -> $crate::pyo3::PyResult<$crate::pyo3::Bound<$crate::pyo3::types::PyList>> {
             use $crate::pyo3::types::PyListMethods;
-            let list = $crate::pyo3::types::PyList::empty_bound($py);
+            let list = $crate::pyo3::types::PyList::empty($py);
             $(list.append($value)?;)*
             Ok(list)
         })()
     };
     ($($value:expr),*) => {
-        $crate::pyo3::Python::with_gil(|py| -> $crate::pyo3::PyResult<$crate::pyo3::Py<$crate::pyo3::types::PyList>> {
+        $crate::pyo3::Python::attach(|py| -> $crate::pyo3::PyResult<$crate::pyo3::Py<$crate::pyo3::types::PyList>> {
             let list = pylist!(py; $($value),*)?;
             Ok(list.into())
         })

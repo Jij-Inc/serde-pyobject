@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_pyobject::{from_pyobject, to_pyobject};
 
 fn check_revertible<'de, T: Serialize + Deserialize<'de> + PartialEq + std::fmt::Debug>(obj: T) {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let any = to_pyobject(py, &obj).unwrap();
         let reverted = from_pyobject(any).unwrap();
         assert_eq!(obj, reverted);
@@ -142,7 +142,7 @@ fn check_python_object() {
         age: i32,
     }
 
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         // Create an instance of Python object
         py.run(
             c_str!(
