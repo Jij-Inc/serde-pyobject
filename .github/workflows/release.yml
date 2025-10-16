@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: cargo publish
         run: |
@@ -24,7 +24,7 @@ jobs:
     needs: publish
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install cargo-edit
         run: cargo install cargo-edit
@@ -35,7 +35,7 @@ jobs:
           echo "NEW_VERSION=$(cargo metadata --no-deps --format-version=1 | jq -r '.packages[0].version')" >> $GITHUB_ENV
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           title: "Start developing ${{ env.NEW_VERSION }}"
           branch: "rust-version-update/${{ env.NEW_VERSION }}"
