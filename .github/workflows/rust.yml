@@ -98,3 +98,13 @@ jobs:
         with:
           command: test
           args: --features abi3-py38
+
+  semver-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check semver
+        uses: obi1kenobi/cargo-semver-checks-action@v2
+        with:
+          package: serde-pyobject
