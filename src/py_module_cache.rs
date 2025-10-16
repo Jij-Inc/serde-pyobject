@@ -3,15 +3,16 @@ use pyo3::{types::*, Bound, IntoPyObject, Py, PyResult, Python};
 
 // Individual OnceCell instances for each cached item
 #[cfg(feature = "dataclass_support")]
-static DATACLASSES_MODULE: OnceCell<pyo3::PyObject> = OnceCell::new();
+static DATACLASSES_MODULE: OnceCell<Py<PyAny>> = OnceCell::new();
 #[cfg(feature = "dataclass_support")]
-static IS_DATACLASS_FN: OnceCell<pyo3::PyObject> = OnceCell::new();
+static IS_DATACLASS_FN: OnceCell<Py<PyAny>> = OnceCell::new();
 
 #[cfg(feature = "pydantic_support")]
-static PYDANTIC_MODULE: OnceCell<pyo3::PyObject> = OnceCell::new();
+static PYDANTIC_MODULE: OnceCell<Py<PyAny>> = OnceCell::new();
 #[cfg(feature = "pydantic_support")]
-static PYDANTIC_BASE_MODEL: OnceCell<pyo3::PyObject> = OnceCell::new();
+static PYDANTIC_BASE_MODEL: OnceCell<Py<PyAny>> = OnceCell::new();
 
+#[cfg(feature = "pydantic_support")]
 fn is_module_installed(py: Python, module_name: &str) -> PyResult<bool> {
     match PyModule::import(py, module_name) {
         Ok(_) => Ok(true),

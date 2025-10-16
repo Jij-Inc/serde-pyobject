@@ -190,7 +190,7 @@ fn check_pydantic_object() {
         age: i32,
     }
 
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         // Create an instance of Python object
         py.run(
             c_str!(
@@ -240,7 +240,7 @@ fn check_dataclass_object() {
         age: i32,
     }
 
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         // Create an instance of Python object
         py.run(
             c_str!(
@@ -296,7 +296,7 @@ fn check_dataclass_object_nested() {
         my_class: MyClassNested,
     }
 
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         // Create an instance of Python object
         py.run(
             c_str!(
