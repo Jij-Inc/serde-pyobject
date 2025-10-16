@@ -12,22 +12,22 @@ use serde::{
 /// ## primitive
 ///
 /// ```
-/// use pyo3::{Python, Py, PyAny, IntoPy};
+/// use pyo3::{Python, Py, PyAny, IntoPyObjectExt};
 /// use serde_pyobject::from_pyobject;
 ///
 /// Python::attach(|py| {
 ///     // integer
-///     let any: Py<PyAny> = 42.into_py(py);
+///     let any: Py<PyAny> = 42_i32.into_bound_py_any(py).unwrap().unbind();
 ///     let i: i32 = from_pyobject(any.into_bound(py)).unwrap();
 ///     assert_eq!(i, 42);
 ///
 ///     // float
-///     let any: Py<PyAny> = (0.1).into_py(py);
+///     let any: Py<PyAny> = 0.1_f32.into_bound_py_any(py).unwrap().unbind();
 ///     let x: f32 = from_pyobject(any.into_bound(py)).unwrap();
 ///     assert_eq!(x, 0.1);
 ///
 ///     // bool
-///     let any: Py<PyAny> = true.into_py(py);
+///     let any: Py<PyAny> = true.into_bound_py_any(py).unwrap().unbind();
 ///     let x: bool = from_pyobject(any.into_bound(py)).unwrap();
 ///     assert_eq!(x, true);
 /// });
@@ -36,7 +36,7 @@ use serde::{
 /// ## option
 ///
 /// ```
-/// use pyo3::{Python, Py, PyAny, IntoPy};
+/// use pyo3::{Python, Py, PyAny, IntoPyObjectExt};
 /// use serde_pyobject::from_pyobject;
 ///
 /// Python::attach(|py| {
@@ -44,7 +44,7 @@ use serde::{
 ///     let option: Option<i32> = from_pyobject(none.into_bound(py)).unwrap();
 ///     assert_eq!(option, None);
 ///
-///     let py_int: Py<PyAny> = 42.into_py(py);
+///     let py_int: Py<PyAny> = 42_i32.into_bound_py_any(py).unwrap().unbind();
 ///     let i: Option<i32> = from_pyobject(py_int.into_bound(py)).unwrap();
 ///     assert_eq!(i, Some(42));
 /// })
@@ -94,7 +94,7 @@ use serde::{
 /// }
 ///
 /// Python::attach(|py| {
-///     let any = PyString::new_bound(py, "A");
+///     let any = PyString::new(py, "A");
 ///     let out: E = from_pyobject(any).unwrap();
 ///     assert_eq!(out, E::A);
 /// })
@@ -104,14 +104,14 @@ use serde::{
 ///
 /// ```
 /// use serde::Deserialize;
-/// use pyo3::{Python, Bound, PyAny, IntoPy};
+/// use pyo3::{Python, Bound, PyAny, IntoPyObject};
 /// use serde_pyobject::from_pyobject;
 ///
 /// #[derive(Debug, PartialEq, Deserialize)]
 /// struct NewTypeStruct(u8);
 ///
 /// Python::attach(|py| {
-///     let any: Bound<PyAny> = 1_u32.into_py(py).into_bound(py);
+///     let any: Bound<PyAny> = 1_u32.into_pyobject(py).unwrap().into_any();
 ///     let obj: NewTypeStruct = from_pyobject(any).unwrap();
 ///     assert_eq!(obj, NewTypeStruct(1));
 /// });
@@ -156,7 +156,7 @@ use serde::{
 /// use serde_pyobject::from_pyobject;
 ///
 /// Python::attach(|py| {
-///     let tuple = PyTuple::new_bound(py, &[1, 2, 3]);
+///     let tuple = PyTuple::new(py, &[1, 2, 3]).unwrap();
 ///     let tuple: (i32, i32, i32) = from_pyobject(tuple).unwrap();
 ///     assert_eq!(tuple, (1, 2, 3));
 /// });
@@ -166,14 +166,14 @@ use serde::{
 ///
 /// ```
 /// use serde::Deserialize;
-/// use pyo3::{Python, IntoPy, types::PyTuple};
+/// use pyo3::{Python, IntoPyObject, types::PyTuple};
 /// use serde_pyobject::from_pyobject;
 ///
 /// #[derive(Debug, PartialEq, Deserialize)]
 /// struct T(u8, String);
 ///
 /// Python::attach(|py| {
-///     let tuple = PyTuple::new_bound(py, &[1_u32.into_py(py), "test".into_py(py)]);
+///     let tuple = PyTuple::new(py, &[1_u32.into_pyobject(py).unwrap().into_any(), "test".into_pyobject(py).unwrap().into_any()]).unwrap();
 ///     let obj: T = from_pyobject(tuple).unwrap();
 ///     assert_eq!(obj, T(1, "test".to_string()));
 /// });

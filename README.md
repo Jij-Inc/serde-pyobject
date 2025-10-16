@@ -58,7 +58,7 @@ Python::attach(|py| {
 
 | [serde data model] | PyO3 type | Rust | Python |
 |------------------|-----------|------------|---------------|
-| `i8`, `i16`, `i32`, `i64`, `isize`, <br> `u8`, `u16`, `u32`, `u64`, `usize` | `PyLong` | `123` | `123` |
+| `i8`, `i16`, `i32`, `i64`, `isize`, <br> `u8`, `u16`, `u32`, `u64`, `usize` | `PyInt` | `123` | `123` |
 | `f32`, `f64` | `PyFloat` | `1.0` | `1.0` |
 | `bool` | `PyBool` | `true` | `true` |
 | `char`, `string` | `PyString` | `'a'`, `"test"` | `"a"`, `"test"` |

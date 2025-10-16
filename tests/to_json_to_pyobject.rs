@@ -2,7 +2,7 @@ use maplit::*;
 use pyo3::prelude::*;
 use serde::Serialize;
 
-fn to_json_to_pyobject<T: Serialize>(py: Python<'_>, obj: T) -> PyResult<Bound<PyAny>> {
+fn to_json_to_pyobject<T: Serialize>(py: Python<'_>, obj: T) -> PyResult<Bound<'_, PyAny>> {
     let json = serde_json::to_string(&obj).unwrap();
     let obj = py.import("json")?.getattr("loads")?.call1((json,))?;
     Ok(obj)

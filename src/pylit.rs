@@ -74,7 +74,7 @@ macro_rules! pydict {
     ($py:expr, $($key:expr => $value:expr),*) => {
         (|| -> $crate::pyo3::PyResult<$crate::pyo3::Bound<$crate::pyo3::types::PyDict>> {
             use $crate::pyo3::types::PyDictMethods;
-            let dict = $crate::pyo3::types::PyDict::new_bound($py);
+            let dict = $crate::pyo3::types::PyDict::new($py);
             $(dict.set_item($key, $value)?;)*
             Ok(dict)
         })()
@@ -127,7 +127,7 @@ macro_rules! pylist {
     ($py:expr; $($value:expr),*) => {
         (|| -> $crate::pyo3::PyResult<$crate::pyo3::Bound<$crate::pyo3::types::PyList>> {
             use $crate::pyo3::types::PyListMethods;
-            let list = $crate::pyo3::types::PyList::empty_bound($py);
+            let list = $crate::pyo3::types::PyList::empty($py);
             $(list.append($value)?;)*
             Ok(list)
         })()

@@ -25,18 +25,18 @@ use serde::{ser, Serialize};
 /// ## integer
 ///
 /// ```
-/// use pyo3::{Python, types::{PyLong, PyAnyMethods}};
+/// use pyo3::{Python, types::{PyInt, PyAnyMethods}};
 /// use serde_pyobject::to_pyobject;
 ///
 /// Python::attach(|py| {
 ///     let obj = to_pyobject(py, &1_u16).unwrap();
-///     assert!(obj.is_exact_instance_of::<PyLong>());
+///     assert!(obj.is_exact_instance_of::<PyInt>());
 ///
 ///     let obj = to_pyobject(py, &1_i64).unwrap();
-///     assert!(obj.is_exact_instance_of::<PyLong>());
+///     assert!(obj.is_exact_instance_of::<PyInt>());
 ///
 ///     let obj = to_pyobject(py, &1_i64).unwrap();
-///     assert!(obj.is_exact_instance_of::<PyLong>());
+///     assert!(obj.is_exact_instance_of::<PyInt>());
 /// });
 /// ```
 ///
@@ -60,7 +60,7 @@ use serde::{ser, Serialize};
 /// Rust `None` is serialized to Python `None`, and `Some(value)` is serialized as `value` is serialized
 ///
 /// ```
-/// use pyo3::{Python, types::{PyLong, PyAnyMethods}};
+/// use pyo3::{Python, types::{PyInt, PyAnyMethods}};
 /// use serde_pyobject::to_pyobject;
 ///
 /// Python::attach(|py| {
@@ -68,7 +68,7 @@ use serde::{ser, Serialize};
 ///     assert!(obj.is(&py.None()));
 ///
 ///     let obj = to_pyobject(py, &Some(1_i64)).unwrap();
-///     assert!(obj.is_exact_instance_of::<PyLong>());
+///     assert!(obj.is_exact_instance_of::<PyInt>());
 /// });
 /// ```
 ///
@@ -82,7 +82,7 @@ use serde::{ser, Serialize};
 ///
 /// Python::attach(|py| {
 ///     let obj = to_pyobject(py, &()).unwrap();
-///     assert!(obj.is(&PyTuple::empty_bound(py)));
+///     assert!(obj.is(&PyTuple::empty(py)));
 /// });
 /// ```
 ///
@@ -100,7 +100,7 @@ use serde::{ser, Serialize};
 ///
 /// Python::attach(|py| {
 ///     let obj = to_pyobject(py, &UnitStruct {}).unwrap();
-///     assert!(obj.eq(PyTuple::empty_bound(py)).unwrap());
+///     assert!(obj.eq(PyTuple::empty(py)).unwrap());
 /// });
 /// ```
 ///
@@ -129,7 +129,7 @@ use serde::{ser, Serialize};
 ///
 /// ```
 /// use serde::Serialize;
-/// use pyo3::{Python, types::{PyLong, PyAnyMethods}};
+/// use pyo3::{Python, types::{PyInt, PyAnyMethods}};
 /// use serde_pyobject::to_pyobject;
 ///
 /// #[derive(Serialize)]
@@ -137,7 +137,7 @@ use serde::{ser, Serialize};
 ///
 /// Python::attach(|py| {
 ///     let obj = to_pyobject(py, &NewtypeStruct(10)).unwrap();
-///     assert!(obj.is_exact_instance_of::<PyLong>());
+///     assert!(obj.is_exact_instance_of::<PyInt>());
 ///     assert!(obj.eq(10).unwrap());
 /// });
 /// ```
@@ -175,12 +175,12 @@ use serde::{ser, Serialize};
 /// ## tuple
 ///
 /// ```
-/// use pyo3::{IntoPy, Python, types::{PyTuple, PyAnyMethods}};
+/// use pyo3::{IntoPyObject, Python, types::{PyTuple, PyAnyMethods}};
 /// use serde_pyobject::to_pyobject;
 ///
 /// Python::attach(|py| {
 ///     let obj = to_pyobject(py, &(3, "test")).unwrap();
-///     assert!(obj.eq(PyTuple::new_bound(py, [3.into_py(py), "test".into_py(py)])).unwrap());
+///     assert!(obj.eq(&PyTuple::new(py, [3_i32.into_pyobject(py).unwrap().into_any(), "test".into_pyobject(py).unwrap().into_any()]).unwrap()).unwrap());
 /// });
 /// ```
 ///
@@ -196,7 +196,7 @@ use serde::{ser, Serialize};
 ///
 /// Python::attach(|py| {
 ///     let obj = to_pyobject(py, &TupleStruct(1, 2, 3)).unwrap();
-///     assert!(obj.eq(PyTuple::new_bound(py, [1, 2, 3])).unwrap());
+///     assert!(obj.eq(&PyTuple::new(py, [1, 2, 3]).unwrap()).unwrap());
 /// });
 /// ```
 ///
@@ -243,7 +243,7 @@ use serde::{ser, Serialize};
 ///
 /// ```
 /// use serde::Serialize;
-/// use pyo3::{IntoPy, Python, types::{PyTuple, PyAnyMethods}};
+/// use pyo3::{Python, types::PyAnyMethods};
 /// use serde_pyobject::{to_pyobject, pydict};
 ///
 /// #[derive(Serialize)]
