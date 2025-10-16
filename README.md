@@ -21,7 +21,7 @@ struct A {
     b: String,
 }
 
-Python::with_gil(|py| {
+Python::attach(|py| {
     let a = A { a: 1, b: "test".to_string() };
     let obj: Bound<PyAny> = to_pyobject(py, &a).unwrap();
     assert!(obj.eq(pydict! { py, "a" => 1, "b" => "test" }.unwrap()).unwrap());
@@ -41,7 +41,7 @@ struct A {
     b: String,
 }
 
-Python::with_gil(|py| {
+Python::attach(|py| {
     let a: Bound<PyDict> = pydict! { py,
       "a" => 1,
       "b" => "test"
@@ -58,7 +58,7 @@ Python::with_gil(|py| {
 
 | [serde data model] | PyO3 type | Rust | Python |
 |------------------|-----------|------------|---------------|
-| `i8`, `i16`, `i32`, `i64`, `isize`, <br> `u8`, `u16`, `u32`, `u64`, `usize` | `PyLong` | `123` | `123` |
+| `i8`, `i16`, `i32`, `i64`, `isize`, <br> `u8`, `u16`, `u32`, `u64`, `usize` | `PyInt` | `123` | `123` |
 | `f32`, `f64` | `PyFloat` | `1.0` | `1.0` |
 | `bool` | `PyBool` | `true` | `true` |
 | `char`, `string` | `PyString` | `'a'`, `"test"` | `"a"`, `"test"` |
