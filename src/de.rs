@@ -383,7 +383,7 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
     }
 
     fn deserialize_unit<V: de::Visitor<'de>>(self, visitor: V) -> Result<V::Value> {
-        if self.0.is(&PyTuple::empty(self.0.py())) {
+        if self.0.is(PyTuple::empty(self.0.py())) {
             visitor.visit_unit()
         } else {
             self.deserialize_any(visitor)
@@ -395,7 +395,7 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         _name: &'static str,
         visitor: V,
     ) -> Result<V::Value> {
-        if self.0.is(&PyTuple::empty(self.0.py())) {
+        if self.0.is(PyTuple::empty(self.0.py())) {
             visitor.visit_unit()
         } else {
             self.deserialize_any(visitor)
