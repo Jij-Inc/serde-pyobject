@@ -94,6 +94,9 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v2
 
+      - name: Install pydantic
+        run: pip install pydantic
+
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
@@ -103,7 +106,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --features abi3-py38
+          args: --features pyo3/abi3
 
   semver-check:
     runs-on: ubuntu-latest
