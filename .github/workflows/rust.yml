@@ -85,6 +85,7 @@ jobs:
       matrix:
         pydantic: [true, false]
         abi3: [true, false]
+    name: Test (pydantic=${{ matrix.pydantic }}, abi3=${{ matrix.abi3 }})
     steps:
       - name: Checkout
         uses: actions/checkout@v5
