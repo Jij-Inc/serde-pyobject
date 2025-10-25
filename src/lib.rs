@@ -7,6 +7,7 @@
 mod dataclass;
 mod de;
 mod error;
+mod pydantic;
 mod pylit;
 mod ser;
 
@@ -19,5 +20,3 @@ pub use ser::to_pyobject;
 
 #[cfg_attr(doc, doc = include_str!("../README.md"))]
 mod readme {}
-
-mod py_module_cache;

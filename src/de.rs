@@ -1,4 +1,8 @@
-use crate::error::{Error, Result};
+use crate::{
+    dataclass::dataclass_as_dict,
+    error::{Error, Result},
+    pydantic::pydantic_model_as_dict,
+};
 use pyo3::{types::*, Bound};
 use serde::{
     de::{self, value::StrDeserializer, MapAccess, SeqAccess, Visitor},
@@ -328,14 +332,11 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         if self.0.is_instance_of::<PyFloat>() {
             return visitor.visit_f64(self.0.extract()?);
         }
-        if let Some(dict) = crate::dataclass::dataclass_as_dict(self.0.py(), &self.0)? {
+        if let Some(dict) = dataclass_as_dict(self.0.py(), &self.0)? {
             return visitor.visit_map(MapDeserializer::new(&dict));
         }
-        if crate::py_module_cache::is_pydantic_base_model(self.0.py(), &self.0)? {
-            // Use pydantic.BaseModel#model_dump() to get the dict representation of the object
-            let model_dump = self.0.getattr("model_dump")?;
-            let dict = model_dump.call0()?;
-            return visitor.visit_map(MapDeserializer::new(dict.cast()?));
+        if let Some(dict) = pydantic_model_as_dict(self.0.py(), &self.0)? {
+            return visitor.visit_map(MapDeserializer::new(&dict));
         }
         if self.0.hasattr("__dict__")? {
             return visitor.visit_map(MapDeserializer::new(self.0.getattr("__dict__")?.cast()?));
