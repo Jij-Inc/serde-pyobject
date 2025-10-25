@@ -1,5 +1,3 @@
-#![cfg(feature = "pydantic_support")]
-
 //! Pydantic Model Tests (Python → Rust)
 //!
 //! This test suite verifies deserialization support for Pydantic models.
