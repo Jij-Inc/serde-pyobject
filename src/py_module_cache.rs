@@ -2,9 +2,7 @@ use once_cell::sync::OnceCell;
 use pyo3::{types::*, Bound, IntoPyObject, Py, PyResult, Python};
 
 // Individual OnceCell instances for each cached item
-#[cfg(feature = "dataclass_support")]
 static DATACLASSES_MODULE: OnceCell<Py<PyAny>> = OnceCell::new();
-#[cfg(feature = "dataclass_support")]
 static IS_DATACLASS_FN: OnceCell<Py<PyAny>> = OnceCell::new();
 
 #[cfg(feature = "pydantic_support")]
@@ -26,7 +24,6 @@ fn is_module_installed(py: Python, module_name: &str) -> PyResult<bool> {
     }
 }
 
-#[cfg(feature = "dataclass_support")]
 pub fn is_dataclass(py: Python, obj: &Bound<'_, PyAny>) -> PyResult<bool> {
     // Initialize the dataclasses module if needed
     if DATACLASSES_MODULE.get().is_none() {

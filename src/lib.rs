@@ -19,5 +19,4 @@ pub use ser::to_pyobject;
 #[cfg_attr(doc, doc = include_str!("../README.md"))]
 mod readme {}
 
-#[cfg(any(feature = "dataclass_support", feature = "pydantic_support"))]
 mod py_module_cache;

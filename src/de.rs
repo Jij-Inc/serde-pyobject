@@ -328,7 +328,6 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         if self.0.is_instance_of::<PyFloat>() {
             return visitor.visit_f64(self.0.extract()?);
         }
-        #[cfg(feature = "dataclass_support")]
         if crate::py_module_cache::is_dataclass(self.0.py(), &self.0)? {
             // Use dataclasses.asdict(obj) to get the dict representation of the object
             let dataclasses = PyModule::import(self.0.py(), "dataclasses")?;

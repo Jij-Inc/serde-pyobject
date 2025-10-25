@@ -231,7 +231,6 @@ MyClass(name="John", age=30)
     })
 }
 
-#[cfg(feature = "dataclass_support")]
 #[test]
 fn check_dataclass_object() {
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -282,7 +281,6 @@ MyClass(name="John", age=30)
     })
 }
 
-#[cfg(feature = "dataclass_support")]
 #[test]
 fn check_dataclass_object_nested() {
     #[derive(Debug, PartialEq, Serialize, Deserialize)]
