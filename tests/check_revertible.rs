@@ -9,7 +9,8 @@
 //! 4. **Assert**: The deserialized Rust value equals the original Rust value
 //!
 //! **Note**: These tests do NOT verify the reverse direction (Python → Rust → Python).
-//! For tests that start with Python objects, see `python_types.rs`.
+//! For tests that start with Python objects, see `python_custom_class.rs`, `python_dataclass.rs`,
+//! and `python_pydantic.rs`.
 //!
 //! This ensures that Rust data structures can safely cross the FFI boundary and return
 //! to Rust without corruption, which is essential for round-trip serialization scenarios.
@@ -21,8 +22,10 @@
 //! - Enums (unit, newtype, tuple, and struct variants)
 //! - Option types
 //!
-//! For tests specific to Python types (dataclasses, Pydantic models, custom classes),
-//! see `python_types.rs`.
+//! For tests specific to Python types, see:
+//! - `python_custom_class.rs` - Custom Python classes with `__dict__`
+//! - `python_dataclass.rs` - Python dataclasses (standard library)
+//! - `python_pydantic.rs` - Pydantic models (requires `pydantic_support` feature)
 
 use maplit::hashmap;
 use pyo3::prelude::*;
