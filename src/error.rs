@@ -1,4 +1,4 @@
-use pyo3::{exceptions::PyRuntimeError, DowncastError, PyErr};
+use pyo3::{exceptions::PyRuntimeError, CastError, PyErr};
 use serde::{de, ser};
 use std::fmt::{self, Display};
 
@@ -12,8 +12,8 @@ impl From<PyErr> for Error {
     }
 }
 
-impl From<DowncastError<'_, '_>> for Error {
-    fn from(err: DowncastError) -> Self {
+impl From<CastError<'_, '_>> for Error {
+    fn from(err: CastError) -> Self {
         let err: PyErr = err.into();
         Error(err)
     }

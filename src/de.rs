@@ -307,13 +307,13 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         V: Visitor<'de>,
     {
         if self.0.is_instance_of::<PyDict>() {
-            return visitor.visit_map(MapDeserializer::new(self.0.downcast()?));
+            return visitor.visit_map(MapDeserializer::new(self.0.cast()?));
         }
         if self.0.is_instance_of::<PyList>() {
-            return visitor.visit_seq(SeqDeserializer::from_list(self.0.downcast()?));
+            return visitor.visit_seq(SeqDeserializer::from_list(self.0.cast()?));
         }
         if self.0.is_instance_of::<PyTuple>() {
-            return visitor.visit_seq(SeqDeserializer::from_tuple(self.0.downcast()?));
+            return visitor.visit_seq(SeqDeserializer::from_tuple(self.0.cast()?));
         }
         if self.0.is_instance_of::<PyString>() {
             return visitor.visit_str(&self.0.extract::<String>()?);
@@ -333,18 +333,16 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
             let dataclasses = PyModule::import(self.0.py(), "dataclasses")?;
             let asdict = dataclasses.getattr("asdict")?;
             let dict = asdict.call1((self.0,))?;
-            return visitor.visit_map(MapDeserializer::new(dict.downcast()?));
+            return visitor.visit_map(MapDeserializer::new(dict.cast()?));
         }
         if crate::py_module_cache::is_pydantic_base_model(self.0.py(), &self.0)? {
             // Use pydantic.BaseModel#model_dump() to get the dict representation of the object
             let model_dump = self.0.getattr("model_dump")?;
             let dict = model_dump.call0()?;
-            return visitor.visit_map(MapDeserializer::new(dict.downcast()?));
+            return visitor.visit_map(MapDeserializer::new(dict.cast()?));
         }
         if self.0.hasattr("__dict__")? {
-            return visitor.visit_map(MapDeserializer::new(
-                self.0.getattr("__dict__")?.downcast()?,
-            ));
+            return visitor.visit_map(MapDeserializer::new(self.0.getattr("__dict__")?.cast()?));
         }
         if self.0.hasattr("__slots__")? {
             // __slots__ and __dict__ are mutually exclusive, see
@@ -366,9 +364,9 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
     ) -> Result<V::Value> {
         // Nested dict `{ "A": { "a": 1, "b": 2 } }` is deserialized as `A { a: 1, b: 2 }`
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &Bound<PyDict> = self.0.downcast()?;
+            let dict: &Bound<PyDict> = self.0.cast()?;
             if let Some(inner) = dict.get_item(name)? {
-                if let Ok(inner) = inner.downcast() {
+                if let Ok(inner) = inner.cast() {
                     return visitor.visit_map(MapDeserializer::new(inner));
                 }
             }
@@ -431,7 +429,7 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
             });
         }
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &Bound<PyDict> = self.0.downcast()?;
+            let dict: &Bound<PyDict> = self.0.cast()?;
             if dict.len() == 1 {
                 let key = dict.keys().get_item(0).unwrap();
                 let value = dict.values().get_item(0).unwrap();
@@ -454,10 +452,10 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         visitor: V,
     ) -> Result<V::Value> {
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &Bound<PyDict> = self.0.downcast()?;
+            let dict: &Bound<PyDict> = self.0.cast()?;
             if let Some(value) = dict.get_item(name)? {
                 if value.is_instance_of::<PyTuple>() {
-                    let tuple: &Bound<PyTuple> = value.downcast()?;
+                    let tuple: &Bound<PyTuple> = value.cast()?;
                     return visitor.visit_seq(SeqDeserializer::from_tuple(tuple));
                 }
             }
