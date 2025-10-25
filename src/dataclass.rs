@@ -6,13 +6,11 @@ pub fn dataclass_as_dict<'py>(
     py: Python<'py>,
     obj: &Bound<'py, PyAny>,
 ) -> PyResult<Option<Bound<'py, PyDict>>> {
-    let module = PyModule::import(py, "dataclasses").expect("Failed to import dataclasses");
-    let is_dataclass_fn = module
-        .getattr("is_dataclass")
-        .expect("Failed to get is_dataclass");
+    let module = PyModule::import(py, "dataclasses")?;
+    let is_dataclass_fn = module.getattr("is_dataclass")?;
 
     if is_dataclass_fn.call1((obj,))?.extract::<bool>()? {
-        let asdict_fn = module.getattr("asdict").expect("Failed to get asdict");
+        let asdict_fn = module.getattr("asdict")?;
         let dict_obj = asdict_fn.call1((obj,))?;
         let dict = dict_obj.cast_into::<PyDict>()?;
         Ok(Some(dict))
