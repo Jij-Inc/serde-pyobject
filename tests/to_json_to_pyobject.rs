@@ -1,3 +1,26 @@
+//! Cross-Validation Tests: Direct Serialization vs JSON Roundtrip
+//!
+//! This test suite validates that `serde_pyobject` produces Python objects equivalent
+//! to those created via JSON serialization. Each test compares two paths:
+//!
+//! 1. **Direct path**: Rust value → Python object (via `to_pyobject`)
+//! 2. **JSON path**: Rust value → JSON string → Python object (via `serde_json` + `json.loads`)
+//!
+//! The assertion ensures both paths produce Python objects that are equal according to
+//! Python's equality semantics (`__eq__`).
+//!
+//! This validates that:
+//! - `serde_pyobject` correctly implements the serde data model
+//! - The mapping from Rust types to Python objects is consistent with JSON's semantics
+//! - No data is lost or transformed incorrectly during direct serialization
+//!
+//! Coverage includes:
+//! - Primitive types (integers, floats, booleans, strings)
+//! - Collections (sequences, maps)
+//! - Structured data (structs with named and unnamed fields)
+//! - Enums (unit, newtype, tuple, and struct variants)
+//! - Option types
+
 use maplit::*;
 use pyo3::prelude::*;
 use serde::Serialize;

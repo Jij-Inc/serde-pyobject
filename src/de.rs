@@ -1,4 +1,8 @@
-use crate::error::{Error, Result};
+use crate::{
+    dataclass::dataclass_as_dict,
+    error::{Error, Result},
+    pydantic::pydantic_model_as_dict,
+};
 use pyo3::{types::*, Bound};
 use serde::{
     de::{self, value::StrDeserializer, MapAccess, SeqAccess, Visitor},
@@ -307,13 +311,13 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         V: Visitor<'de>,
     {
         if self.0.is_instance_of::<PyDict>() {
-            return visitor.visit_map(MapDeserializer::new(self.0.downcast()?));
+            return visitor.visit_map(MapDeserializer::new(self.0.cast()?));
         }
         if self.0.is_instance_of::<PyList>() {
-            return visitor.visit_seq(SeqDeserializer::from_list(self.0.downcast()?));
+            return visitor.visit_seq(SeqDeserializer::from_list(self.0.cast()?));
         }
         if self.0.is_instance_of::<PyTuple>() {
-            return visitor.visit_seq(SeqDeserializer::from_tuple(self.0.downcast()?));
+            return visitor.visit_seq(SeqDeserializer::from_tuple(self.0.cast()?));
         }
         if self.0.is_instance_of::<PyString>() {
             return visitor.visit_str(&self.0.extract::<String>()?);
@@ -328,10 +332,14 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         if self.0.is_instance_of::<PyFloat>() {
             return visitor.visit_f64(self.0.extract()?);
         }
+        if let Some(dict) = dataclass_as_dict(self.0.py(), &self.0)? {
+            return visitor.visit_map(MapDeserializer::new(&dict));
+        }
+        if let Some(dict) = pydantic_model_as_dict(self.0.py(), &self.0)? {
+            return visitor.visit_map(MapDeserializer::new(&dict));
+        }
         if self.0.hasattr("__dict__")? {
-            return visitor.visit_map(MapDeserializer::new(
-                self.0.getattr("__dict__")?.downcast()?,
-            ));
+            return visitor.visit_map(MapDeserializer::new(self.0.getattr("__dict__")?.cast()?));
         }
         if self.0.hasattr("__slots__")? {
             // __slots__ and __dict__ are mutually exclusive, see
@@ -353,9 +361,9 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
     ) -> Result<V::Value> {
         // Nested dict `{ "A": { "a": 1, "b": 2 } }` is deserialized as `A { a: 1, b: 2 }`
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &Bound<PyDict> = self.0.downcast()?;
+            let dict: &Bound<PyDict> = self.0.cast()?;
             if let Some(inner) = dict.get_item(name)? {
-                if let Ok(inner) = inner.downcast() {
+                if let Ok(inner) = inner.cast() {
                     return visitor.visit_map(MapDeserializer::new(inner));
                 }
             }
@@ -418,7 +426,7 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
             });
         }
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &Bound<PyDict> = self.0.downcast()?;
+            let dict: &Bound<PyDict> = self.0.cast()?;
             if dict.len() == 1 {
                 let key = dict.keys().get_item(0).unwrap();
                 let value = dict.values().get_item(0).unwrap();
@@ -441,10 +449,10 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         visitor: V,
     ) -> Result<V::Value> {
         if self.0.is_instance_of::<PyDict>() {
-            let dict: &Bound<PyDict> = self.0.downcast()?;
+            let dict: &Bound<PyDict> = self.0.cast()?;
             if let Some(value) = dict.get_item(name)? {
                 if value.is_instance_of::<PyTuple>() {
-                    let tuple: &Bound<PyTuple> = value.downcast()?;
+                    let tuple: &Bound<PyTuple> = value.cast()?;
                     return visitor.visit_seq(SeqDeserializer::from_tuple(tuple));
                 }
             }

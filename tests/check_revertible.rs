@@ -1,5 +1,34 @@
+//! Roundtrip Conversion Tests (Rust → Python → Rust)
+//!
+//! This test suite verifies that Rust values can be converted to Python and back without
+//! data loss. Each test performs the following one-way roundtrip:
+//!
+//! 1. **Start**: Create a Rust value
+//! 2. **Serialize**: Rust value → Python object (via `to_pyobject`)
+//! 3. **Deserialize**: Python object → Rust value (via `from_pyobject`)
+//! 4. **Assert**: The deserialized Rust value equals the original Rust value
+//!
+//! **Note**: These tests do NOT verify the reverse direction (Python → Rust → Python).
+//! For tests that start with Python objects, see `python_custom_class.rs`, `python_dataclass.rs`,
+//! and `python_pydantic.rs`.
+//!
+//! This ensures that Rust data structures can safely cross the FFI boundary and return
+//! to Rust without corruption, which is essential for round-trip serialization scenarios.
+//!
+//! Coverage includes:
+//! - Primitive types (integers, floats, booleans, strings)
+//! - Collections (vectors, maps)
+//! - Structured data (structs, tuples, newtypes)
+//! - Enums (unit, newtype, tuple, and struct variants)
+//! - Option types
+//!
+//! For tests specific to Python types, see:
+//! - `python_custom_class.rs` - Custom Python classes with `__dict__`
+//! - `python_dataclass.rs` - Python dataclasses (standard library)
+//! - `python_pydantic.rs` - Pydantic models (requires `pydantic_support` feature)
+
 use maplit::hashmap;
-use pyo3::{ffi::c_str, prelude::*};
+use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_pyobject::{from_pyobject, to_pyobject};
 
@@ -132,51 +161,4 @@ fn struct_variant() {
         g: 20,
         b: 30,
     });
-}
-
-#[test]
-fn check_python_object() {
-    #[derive(Debug, PartialEq, Serialize, Deserialize)]
-    struct MyClass {
-        name: String,
-        age: i32,
-    }
-
-    Python::attach(|py| {
-        // Create an instance of Python object
-        py.run(
-            c_str!(
-                r#"
-class MyClass:
-    def __init__(self, name: str, age: int):
-        self.name = name
-        self.age = age
-        "#
-            ),
-            None,
-            None,
-        )
-        .unwrap();
-        // Create an instance of MyClass
-        let my_python_class = py
-            .eval(
-                c_str!(
-                    r#"
-MyClass("John", 30)
-"#
-                ),
-                None,
-                None,
-            )
-            .unwrap();
-
-        let my_rust_class = MyClass {
-            name: "John".to_string(),
-            age: 30,
-        };
-        let any: Bound<'_, PyAny> = to_pyobject(py, &my_rust_class).unwrap();
-        let rust_version: MyClass = from_pyobject(my_python_class).unwrap();
-        let python_version: MyClass = from_pyobject(any).unwrap();
-        assert_eq!(rust_version, python_version);
-    })
 }
