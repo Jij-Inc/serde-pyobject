@@ -2,9 +2,6 @@ use once_cell::sync::OnceCell;
 use pyo3::{types::*, Bound, IntoPyObject, Py, PyResult, Python};
 
 // Individual OnceCell instances for each cached item
-static DATACLASSES_MODULE: OnceCell<Py<PyAny>> = OnceCell::new();
-static IS_DATACLASS_FN: OnceCell<Py<PyAny>> = OnceCell::new();
-
 static PYDANTIC_MODULE: OnceCell<Py<PyAny>> = OnceCell::new();
 static PYDANTIC_BASE_MODEL: OnceCell<Py<PyAny>> = OnceCell::new();
 
@@ -19,39 +16,6 @@ fn is_module_installed(py: Python, module_name: &str) -> PyResult<bool> {
             }
         }
     }
-}
-
-pub fn is_dataclass(py: Python, obj: &Bound<'_, PyAny>) -> PyResult<bool> {
-    // Initialize the dataclasses module if needed
-    if DATACLASSES_MODULE.get().is_none() {
-        let dataclasses = PyModule::import(py, "dataclasses")?;
-        let _ = DATACLASSES_MODULE.set(dataclasses.into());
-    }
-
-    // Initialize the is_dataclass function if needed
-    let is_dataclass_fn = if let Some(fn_obj) = IS_DATACLASS_FN.get() {
-        fn_obj
-    } else {
-        let dataclasses = DATACLASSES_MODULE
-            .get()
-            .ok_or_else(|| {
-                pyo3::exceptions::PyRuntimeError::new_err("Dataclasses module not initialized")
-            })?
-            .bind(py);
-        let is_dataclass_fn: Py<PyAny> = dataclasses
-            .getattr("is_dataclass")?
-            .into_pyobject(py)?
-            .into();
-        // Safe to unwrap because we know the value is set
-        let _ = IS_DATACLASS_FN.set(is_dataclass_fn);
-        IS_DATACLASS_FN.get().ok_or_else(|| {
-            pyo3::exceptions::PyRuntimeError::new_err("Failed to initialize is_dataclass function")
-        })?
-    };
-
-    // Execute the function
-    let result = is_dataclass_fn.bind(py).call1((obj,))?;
-    result.extract()
 }
 
 pub fn is_pydantic_base_model(py: Python, obj: &Bound<'_, PyAny>) -> PyResult<bool> {

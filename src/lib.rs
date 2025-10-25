@@ -4,6 +4,7 @@
 //! to Python objects.
 //!
 
+mod dataclass;
 mod de;
 mod error;
 mod pylit;

@@ -328,12 +328,8 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         if self.0.is_instance_of::<PyFloat>() {
             return visitor.visit_f64(self.0.extract()?);
         }
-        if crate::py_module_cache::is_dataclass(self.0.py(), &self.0)? {
-            // Use dataclasses.asdict(obj) to get the dict representation of the object
-            let dataclasses = PyModule::import(self.0.py(), "dataclasses")?;
-            let asdict = dataclasses.getattr("asdict")?;
-            let dict = asdict.call1((self.0,))?;
-            return visitor.visit_map(MapDeserializer::new(dict.cast()?));
+        if let Some(dict) = crate::dataclass::dataclass_as_dict(self.0.py(), &self.0)? {
+            return visitor.visit_map(MapDeserializer::new(&dict));
         }
         if crate::py_module_cache::is_pydantic_base_model(self.0.py(), &self.0)? {
             // Use pydantic.BaseModel#model_dump() to get the dict representation of the object
