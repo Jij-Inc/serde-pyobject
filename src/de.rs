@@ -330,7 +330,7 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
         }
         #[cfg(feature = "dataclass_support")]
         if crate::py_module_cache::is_dataclass(self.0.py(), &self.0)? {
-            // Use dataclasses.asdict(obj) to get the dict representtion of the object
+            // Use dataclasses.asdict(obj) to get the dict representation of the object
             let dataclasses = PyModule::import(self.0.py(), "dataclasses")?;
             let asdict = dataclasses.getattr("asdict")?;
             let dict = asdict.call1((self.0,))?;

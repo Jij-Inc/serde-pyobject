@@ -69,7 +69,7 @@ pub fn is_pydantic_base_model(py: Python, obj: &Bound<'_, PyAny>) -> PyResult<bo
     // Initialize pydantic module if needed
     if PYDANTIC_MODULE.get().is_none() {
         let pydantic = PyModule::import(py, "pydantic")?;
-        // Safe to unwrap because we know the value is empty
+        // Safe to call set because we have checked the OnceCell is empty
         let _ = PYDANTIC_MODULE.set(pydantic.into());
     }
 
@@ -84,7 +84,7 @@ pub fn is_pydantic_base_model(py: Python, obj: &Bound<'_, PyAny>) -> PyResult<bo
             })?
             .bind(py);
         let base_model: Py<PyAny> = pydantic.getattr("BaseModel")?.into_pyobject(py)?.into();
-        // Safe to unwrap because we know the value is empty
+        // Safe to call set because we have checked the OnceCell is empty
         let _ = PYDANTIC_BASE_MODEL.set(base_model);
         PYDANTIC_BASE_MODEL.get().ok_or_else(|| {
             pyo3::exceptions::PyRuntimeError::new_err("Failed to initialize BaseModel")
