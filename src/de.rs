@@ -335,7 +335,6 @@ impl<'de> de::Deserializer<'de> for PyAnyDeserializer<'_> {
             let dict = asdict.call1((self.0,))?;
             return visitor.visit_map(MapDeserializer::new(dict.downcast()?));
         }
-        #[cfg(feature = "pydantic_support")]
         if crate::py_module_cache::is_pydantic_base_model(self.0.py(), &self.0)? {
             // Use pydantic.BaseModel#model_dump() to get the dict representation of the object
             let model_dump = self.0.getattr("model_dump")?;

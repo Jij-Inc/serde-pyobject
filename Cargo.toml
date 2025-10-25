@@ -23,4 +23,3 @@ serde_json = "1.0.145"
 [features]
 default = []
 abi3-py38 = ["pyo3/abi3-py38"]
-pydantic_support = []

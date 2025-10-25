@@ -5,12 +5,9 @@ use pyo3::{types::*, Bound, IntoPyObject, Py, PyResult, Python};
 static DATACLASSES_MODULE: OnceCell<Py<PyAny>> = OnceCell::new();
 static IS_DATACLASS_FN: OnceCell<Py<PyAny>> = OnceCell::new();
 
-#[cfg(feature = "pydantic_support")]
 static PYDANTIC_MODULE: OnceCell<Py<PyAny>> = OnceCell::new();
-#[cfg(feature = "pydantic_support")]
 static PYDANTIC_BASE_MODEL: OnceCell<Py<PyAny>> = OnceCell::new();
 
-#[cfg(feature = "pydantic_support")]
 fn is_module_installed(py: Python, module_name: &str) -> PyResult<bool> {
     match PyModule::import(py, module_name) {
         Ok(_) => Ok(true),
@@ -56,7 +53,7 @@ pub fn is_dataclass(py: Python, obj: &Bound<'_, PyAny>) -> PyResult<bool> {
     let result = is_dataclass_fn.bind(py).call1((obj,))?;
     result.extract()
 }
-#[cfg(feature = "pydantic_support")]
+
 pub fn is_pydantic_base_model(py: Python, obj: &Bound<'_, PyAny>) -> PyResult<bool> {
     // First check if pydantic is installed
     if !is_module_installed(py, "pydantic")? {
