@@ -80,6 +80,11 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pydantic: [true, false]
+        abi3: [true, false]
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -95,18 +100,14 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Install pydantic
+        if: matrix.pydantic
         run: pip install pydantic
 
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:
           command: test
-
-      - name: Run tests with abi3 feature
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --features pyo3/abi3
+          args: ${{ matrix.abi3 && '--features pyo3/abi3' || '' }}
 
   semver-check:
     runs-on: ubuntu-latest
